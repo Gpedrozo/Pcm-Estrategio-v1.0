@@ -4,7 +4,7 @@ import {
   Building2, Package, MessageSquare, Calendar, Search,
   Shield, TrendingUp, FileSearch, Lightbulb, Truck,
   Inbox, CalendarClock, Activity, DollarSign, BarChart3,
-  FileArchive, Crown, Droplet, Lock
+  FileArchive, Crown, Droplet, Lock, Brain
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -58,6 +58,7 @@ const cadastroMenuItems: MenuItem[] = [
 const relatoriosMenuItems: MenuItem[] = [
   { title: 'Custos', url: '/custos', icon: DollarSign },
   { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
+  { title: 'Análise IA', url: '/analise-ia', icon: Brain },
 ];
 
 const ssmaMenuItems: MenuItem[] = [

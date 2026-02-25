@@ -36,6 +36,7 @@ import SSMAPage from "./pages/SSMAPage";
 import Usuarios from "./pages/Usuarios";
 import Auditoria from "./pages/Auditoria";
 import MasterTI from "./pages/MasterTI";
+import AnaliseIA from "./pages/AnaliseIA";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="/ssma" element={<SSMAPage />} />
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/auditoria" element={<Auditoria />} />
+              <Route path="/analise-ia" element={<AnaliseIA />} />
               <Route path="/master-ti" element={<MasterTI />} />
             </Route>
 

@@ -1,1 +1,4 @@
 project_id = "znuxtssancrnobracmtj"
+
+[functions.analise-ia]
+verify_jwt = false
