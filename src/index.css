@@ -195,6 +195,35 @@
   }
 }
 
+/* Print styles */
+@media print {
+  .no-print,
+  [data-sidebar],
+  header.no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12px;
+  }
+
+  .print-container {
+    padding: 0;
+    margin: 0;
+  }
+
+  main {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  @page {
+    margin: 1.5cm;
+  }
+}
+
 /* Splash screen animations */
 @keyframes fade-in-scale {
   0% { opacity: 0; transform: scale(0.9); }

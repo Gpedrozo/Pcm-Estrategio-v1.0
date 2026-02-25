@@ -1,8 +1,43 @@
-# PCM ESTRATÉGICO — Documentação Técnica do Sistema
+# PCM ESTRATÉGICO — Documentação Técnica v4.0
 
-## Visão Geral
-Sistema de Gestão de Manutenção Industrial (PCM) projetado como SaaS multi-empresa para indústrias.
+## 1. Visão Geral
+Sistema SaaS multi-empresa de **Gestão de Manutenção Industrial (PCM)** com isolamento total por `empresa_id`.
 
+### Stack
+- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS
+- **Backend:** Lovable Cloud (Supabase) — Auth, Postgres, Storage, Edge Functions
+- **UI:** shadcn/ui + Lucide Icons + Recharts
+
+---
+
+## 2. Arquitetura
+```
+src/
+├── components/layout/     # AppLayout, AppSidebar
+├── components/relatorios/ # RelatorioPDF, RelatorioOS
+├── contexts/              # AuthContext, EmpresaContext
+├── hooks/                 # useEmpresaQuery, useAuditoria, useModuloGuard
+├── types/index.ts         # Types centralizados + mapeamento módulos
+├── pages/                 # 25+ páginas
+└── integrations/supabase/ # Client e types (auto-gerados)
+```
+
+## 3. Segurança (RLS v4)
+- SELECT/INSERT/UPDATE: `empresa_id = get_user_empresa_id() OR has_role(auth.uid(), 'MASTER_TI')`
+- DELETE: Apenas ADMIN ou MASTER_TI
+- Funções: `get_user_empresa_id()`, `has_role()`, `handle_new_user()` (SECURITY DEFINER)
+
+## 4. Controle de Módulos
+- `planos_saas.modulos_ativos[]` define acesso por plano
+- Sidebar com cadeado em módulos bloqueados
+- AppLayout redireciona rotas bloqueadas para /dashboard
+
+## 5. Hooks
+- `useEmpresaQuery()`: fromEmpresa, insertWithEmpresa, withEmpresa
+- `useAuditoria()`: registrar(acao, descricao, tag?)
+- `useModuloGuard(modulo)`: proteção de rota
+
+## 6. Versão v4.0 — 2026-02-25
 **Stack:** React 18 + TypeScript + Vite + Tailwind CSS + Lovable Cloud (Supabase)
 
 ---

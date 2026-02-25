@@ -4,10 +4,11 @@ import {
   Building2, Package, MessageSquare, Calendar, Search,
   Shield, TrendingUp, FileSearch, Lightbulb, Truck,
   Inbox, CalendarClock, Activity, DollarSign, BarChart3,
-  FileArchive, Crown, Droplet
+  FileArchive, Crown, Droplet, Lock
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEmpresa } from '@/contexts/EmpresaContext';
 import gppisLogo from '@/assets/gppis-logo.png';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -16,11 +17,13 @@ import {
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 
-const mainMenuItems = [
+type MenuItem = { title: string; url: string; icon: React.ElementType };
+
+const mainMenuItems: MenuItem[] = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
 ];
 
-const osMenuItems = [
+const osMenuItems: MenuItem[] = [
   { title: 'Solicitações', url: '/solicitacoes', icon: MessageSquare },
   { title: 'Backlog', url: '/backlog', icon: Inbox },
   { title: 'Emitir O.S', url: '/os/nova', icon: FilePlus },
@@ -28,7 +31,7 @@ const osMenuItems = [
   { title: 'Histórico', url: '/os/historico', icon: History },
 ];
 
-const planejamentoMenuItems = [
+const planejamentoMenuItems: MenuItem[] = [
   { title: 'Lubrificação', url: '/lubrificacao', icon: Droplet },
   { title: 'Programação', url: '/programacao', icon: CalendarClock },
   { title: 'Preventiva', url: '/preventiva', icon: Calendar },
@@ -36,13 +39,13 @@ const planejamentoMenuItems = [
   { title: 'Inspeções', url: '/inspecoes', icon: Search },
 ];
 
-const analisesMenuItems = [
+const analisesMenuItems: MenuItem[] = [
   { title: 'FMEA/RCM', url: '/fmea', icon: FileSearch },
   { title: 'Causa Raiz', url: '/rca', icon: TrendingUp },
   { title: 'Melhorias', url: '/melhorias', icon: Lightbulb },
 ];
 
-const cadastroMenuItems = [
+const cadastroMenuItems: MenuItem[] = [
   { title: 'Hierarquia', url: '/hierarquia', icon: Building2 },
   { title: 'Equipamentos', url: '/equipamentos', icon: Tag },
   { title: 'Mecânicos', url: '/mecanicos', icon: Wrench },
@@ -52,53 +55,66 @@ const cadastroMenuItems = [
   { title: 'Documentos', url: '/documentos', icon: FileArchive },
 ];
 
-const relatoriosMenuItems = [
+const relatoriosMenuItems: MenuItem[] = [
   { title: 'Custos', url: '/custos', icon: DollarSign },
   { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
 ];
 
-const ssmaMenuItems = [
+const ssmaMenuItems: MenuItem[] = [
   { title: 'SSMA', url: '/ssma', icon: Shield },
 ];
 
-const adminMenuItems = [
+const adminMenuItems: MenuItem[] = [
   { title: 'Usuários', url: '/usuarios', icon: Users },
   { title: 'Auditoria', url: '/auditoria', icon: ClipboardList },
 ];
 
-type MenuItem = { title: string; url: string; icon: React.ElementType };
+interface MenuGroup {
+  label: string;
+  modulo: string;
+  items: MenuItem[];
+}
 
-const menuGroups = [
-  { label: 'Principal', items: mainMenuItems },
-  { label: 'Ordens de Serviço', items: osMenuItems },
-  { label: 'Planejamento', items: planejamentoMenuItems },
-  { label: 'Análises', items: analisesMenuItems },
-  { label: 'Cadastros', items: cadastroMenuItems },
-  { label: 'Relatórios', items: relatoriosMenuItems },
-  { label: 'Segurança', items: ssmaMenuItems },
+const menuGroups: MenuGroup[] = [
+  { label: 'Principal', modulo: 'dashboard', items: mainMenuItems },
+  { label: 'Ordens de Serviço', modulo: 'ordens_servico', items: osMenuItems },
+  { label: 'Planejamento', modulo: 'planejamento', items: planejamentoMenuItems },
+  { label: 'Análises', modulo: 'analises', items: analisesMenuItems },
+  { label: 'Cadastros', modulo: 'cadastros', items: cadastroMenuItems },
+  { label: 'Relatórios', modulo: 'relatorios', items: relatoriosMenuItems },
+  { label: 'Segurança', modulo: 'ssma', items: ssmaMenuItems },
 ];
 
 export function AppSidebar() {
   const { user, logout, isAdmin, isMasterTI } = useAuth();
+  const { moduloAtivo } = useEmpresa();
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
 
-  const renderMenuLink = (item: MenuItem) => (
+  const renderMenuLink = (item: MenuItem, locked = false) => (
     <SidebarMenuItem key={item.url}>
       <SidebarMenuButton asChild>
-        <NavLink
-          to={item.url}
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-            isActive(item.url)
-              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-              : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-          )}
-        >
-          <item.icon className="h-5 w-5" />
-          <span>{item.title}</span>
-        </NavLink>
+        {locked ? (
+          <div className="flex items-center gap-3 px-3 py-2 rounded-md text-sidebar-foreground/30 cursor-not-allowed">
+            <item.icon className="h-5 w-5" />
+            <span>{item.title}</span>
+            <Lock className="h-3 w-3 ml-auto" />
+          </div>
+        ) : (
+          <NavLink
+            to={item.url}
+            className={cn(
+              "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+              isActive(item.url)
+                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+            )}
+          >
+            <item.icon className="h-5 w-5" />
+            <span>{item.title}</span>
+          </NavLink>
+        )}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
@@ -116,16 +132,22 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-4">
-        {menuGroups.map((group) => (
-          <SidebarGroup key={group.label} className="mt-2">
-            <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-xs font-semibold px-3 mb-2">
-              {group.label}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>{group.items.map(renderMenuLink)}</SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {menuGroups.map((group) => {
+          const isModuloAtivo = moduloAtivo(group.modulo);
+          return (
+            <SidebarGroup key={group.label} className="mt-2">
+              <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-xs font-semibold px-3 mb-2">
+                {group.label}
+                {!isModuloAtivo && <Lock className="inline h-3 w-3 ml-1 opacity-50" />}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map(item => renderMenuLink(item, !isModuloAtivo))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
 
         {isAdmin && (
           <SidebarGroup className="mt-2">
@@ -133,7 +155,7 @@ export function AppSidebar() {
               Administração
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>{adminMenuItems.map(renderMenuLink)}</SidebarMenu>
+              <SidebarMenu>{adminMenuItems.map(item => renderMenuLink(item))}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
