@@ -12,8 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, Search, Settings2, Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, XCircle, Activity, Wrench, FileText, GitBranchPlus } from 'lucide-react';
+import { Loader2, Plus, Search, Settings2, Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, XCircle, Activity, Wrench, FileText, GitBranchPlus, BookOpen } from 'lucide-react';
 import ArvoreEstrutural from '@/components/equipamentos/ArvoreEstrutural';
+import ManuaisEquipamento from '@/components/equipamentos/ManuaisEquipamento';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -369,11 +370,12 @@ export default function Equipamentos() {
                 </form>
               ) : (
                 <Tabs defaultValue="dados" className="mt-4">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="dados">Dados Técnicos</TabsTrigger>
-                    <TabsTrigger value="arvore" className="gap-1.5"><GitBranchPlus className="h-3.5 w-3.5" />Árvore</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-5">
+                    <TabsTrigger value="dados">Dados</TabsTrigger>
+                    <TabsTrigger value="arvore" className="gap-1"><GitBranchPlus className="h-3.5 w-3.5" />Árvore</TabsTrigger>
+                    <TabsTrigger value="manuais" className="gap-1"><BookOpen className="h-3.5 w-3.5" />Manuais</TabsTrigger>
                     <TabsTrigger value="manutencao">Manutenção</TabsTrigger>
-                    <TabsTrigger value="info">Informações</TabsTrigger>
+                    <TabsTrigger value="info">Info</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="dados" className="space-y-4 mt-4">
@@ -397,6 +399,10 @@ export default function Equipamentos() {
 
                   <TabsContent value="arvore" className="mt-4">
                     <ArvoreEstrutural equipamentoId={selected.id} equipamentoTag={selected.tag} />
+                  </TabsContent>
+
+                  <TabsContent value="manuais" className="mt-4">
+                    <ManuaisEquipamento equipamentoId={selected.id} equipamentoTag={selected.tag} />
                   </TabsContent>
 
                   <TabsContent value="manutencao" className="space-y-4 mt-4">
