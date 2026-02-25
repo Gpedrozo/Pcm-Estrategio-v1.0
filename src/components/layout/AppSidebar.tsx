@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import gppisLogo from '@/assets/gppis-logo.png';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton,
@@ -106,9 +107,7 @@ export function AppSidebar() {
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-md bg-sidebar-primary flex items-center justify-center">
-            <Settings className="h-6 w-6 text-sidebar-primary-foreground" />
-          </div>
+          <img src={gppisLogo} alt="GPPIS Industrial Systems" className="h-10 w-auto" />
           <div>
             <h1 className="text-lg font-bold text-sidebar-foreground">PCM ESTRATÉGICO</h1>
             <p className="text-xs text-sidebar-foreground/60">Sistema de Manutenção</p>
@@ -153,7 +152,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-sidebar-border">
+      <SidebarFooter className="p-4 border-t border-sidebar-border space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
@@ -173,6 +172,9 @@ export function AppSidebar() {
           >
             <LogOut className="h-5 w-5" />
           </button>
+        </div>
+        <div className="flex items-center justify-center pt-2 border-t border-sidebar-border/50">
+          <img src={gppisLogo} alt="GPPIS Industrial Systems" className="h-6 w-auto opacity-60" />
         </div>
       </SidebarFooter>
     </Sidebar>
