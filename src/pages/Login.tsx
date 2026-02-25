@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, AlertCircle, Settings } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import gppisLogo from '@/assets/gppis-logo.png';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -63,9 +64,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary mb-4">
-            <Settings className="h-8 w-8 text-primary-foreground" />
-          </div>
+          <img src={gppisLogo} alt="GPPIS Industrial Systems" className="h-20 w-auto mb-4" />
           <h1 className="text-2xl font-bold text-foreground">PCM ESTRATÉGICO</h1>
           <p className="text-muted-foreground mt-1">Sistema de Gestão de Manutenção Industrial</p>
         </div>
