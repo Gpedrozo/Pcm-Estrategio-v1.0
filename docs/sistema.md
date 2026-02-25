@@ -5,7 +5,7 @@ Sistema SaaS multi-empresa de **Gestão de Manutenção Industrial (PCM)** com i
 
 ### Stack
 - **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS
-- **Backend:** Lovable Cloud (Supabase) — Auth, Postgres, Storage, Edge Functions
+- **Backend:** Supabase Cloud — Auth, Postgres, Storage, Edge Functions
 - **UI:** shadcn/ui + Lucide Icons + Recharts
 
 ---
@@ -19,7 +19,7 @@ src/
 ├── hooks/                 # useEmpresaQuery, useAuditoria, useModuloGuard
 ├── types/index.ts         # Types centralizados + mapeamento módulos
 ├── pages/                 # 25+ páginas
-└── integrations/supabase/ # Client e types (auto-gerados)
+└── integrations/supabase/ # Client e types do Supabase
 ```
 
 ## 3. Segurança (RLS v4)
@@ -38,7 +38,7 @@ src/
 - `useModuloGuard(modulo)`: proteção de rota
 
 ## 6. Versão v4.0 — 2026-02-25
-**Stack:** React 18 + TypeScript + Vite + Tailwind CSS + Lovable Cloud (Supabase)
+**Stack:** React 18 + TypeScript + Vite + Tailwind CSS + Supabase Cloud
 
 ---
 
@@ -56,12 +56,12 @@ src/
 │   └── EmpresaContext.tsx # Contexto multi-empresa
 ├── hooks/               # Hooks customizados
 ├── integrations/
-│   └── supabase/        # Cliente e tipos auto-gerados
+│   └── supabase/        # Cliente e tipos do Supabase
 ├── lib/                 # Utilitários (cn, etc)
 └── pages/               # Páginas do sistema
 ```
 
-### Backend (Lovable Cloud)
+### Backend (Supabase Cloud)
 - **Autenticação:** Supabase Auth (email/password)
 - **Banco:** PostgreSQL com RLS
 - **Storage:** Disponível para logos e documentos
@@ -178,4 +178,6 @@ Todas possuem `empresa_id` para isolamento multi-empresa:
 
 ## Versão
 - **v3.0** — PCM ESTRATÉGICO
-- **Desenvolvido por:** GPPIS Industrial Systems
+- **Sistema desenvolvido por:** GPPIS – Gustavo Pedrozo Pinto Industrial Systems
+- **Criador:** Gustavo Pedrozo Pinto
+- **Site oficial:** https://www.gppis.com.br

@@ -12,11 +12,13 @@ export default function AdminConfig() {
     ['Versão do Sistema', 'PCM Estratégico v4.0'],
     ['Framework', 'React 18 + TypeScript + Vite'],
     ['UI Library', 'shadcn/ui + Tailwind CSS'],
-    ['Backend', 'Lovable Cloud'],
+    ['Backend', 'Supabase Cloud'],
     ['Banco de Dados', 'PostgreSQL (com RLS)'],
-    ['Autenticação', 'Email/Senha (Lovable Cloud Auth)'],
+    ['Autenticação', 'Email/Senha (Supabase Auth)'],
     ['Ambiente', 'Produção'],
-    ['Desenvolvido por', 'GPPIS Industrial Systems'],
+    ['Sistema desenvolvido por', 'GPPIS – Gustavo Pedrozo Pinto Industrial Systems'],
+    ['Criador', 'Gustavo Pedrozo Pinto'],
+    ['Site oficial', 'https://www.gppis.com.br'],
   ];
 
   const security = [

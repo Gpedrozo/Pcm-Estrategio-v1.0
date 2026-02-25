@@ -13,8 +13,10 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
+    const AI_GATEWAY_API_KEY = Deno.env.get("AI_GATEWAY_API_KEY");
+    if (!AI_GATEWAY_API_KEY) throw new Error("AI_GATEWAY_API_KEY não configurada");
+    const AI_GATEWAY_URL = Deno.env.get("AI_GATEWAY_URL");
+    if (!AI_GATEWAY_URL) throw new Error("AI_GATEWAY_URL não configurada");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -98,7 +100,7 @@ serve(async (req) => {
     const prevVencidas = preventivas.filter((p: any) => new Date(p.proxima_execucao) < now).length;
     const lubVencidas = lubrificacao.filter((l: any) => new Date(l.proxima_execucao) < now).length;
 
-    // Build mode-specific prompt
+    // Build mode-specific instructions
     let modoInstrucao = "";
     if (modo === "equipamento") {
       const eq = equipamentos.find((e: any) => e.tag === tag);
@@ -117,7 +119,7 @@ Para cada equipamento problemático, liste:
 Ordene do mais problemático para o menos.`;
     }
 
-    const systemPrompt = `Você é um engenheiro especialista em manutenção industrial (PCM).
+    const systemInstruction = `Você é um engenheiro especialista em manutenção industrial (PCM).
 ${modoInstrucao}
 
 FORMATO DA RESPOSTA:
@@ -144,7 +146,7 @@ FORMATO DA RESPOSTA:
 
 Seja MUITO ESPECÍFICO: cite TAGs, quantidades exatas, percentuais. Nunca generalize.`;
 
-    const userPrompt = `DADOS PARA ANÁLISE:
+    const userInstruction = `DADOS PARA ANÁLISE:
 
 📌 RESUMO GERAL:
 - Total de OS filtradas: ${totalOS} (${abertas} abertas, ${corretivas} corretivas, ${preventiv} preventivas, ${urgentes} urgentes)
@@ -167,17 +169,17 @@ ${equipamentos.filter((e: any) => e.criticidade === "A").map((e: any) => `${e.ta
 
 Faça a análise completa conforme instruído.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(AI_GATEWAY_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${AI_GATEWAY_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          { role: "system", content: systemInstruction },
+          { role: "user", content: userInstruction },
         ],
         stream: true,
       }),
