@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, Search, Settings2, Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, XCircle, Activity, Wrench, FileText } from 'lucide-react';
+import { Loader2, Plus, Search, Settings2, Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, XCircle, Activity, Wrench, FileText, GitBranchPlus } from 'lucide-react';
+import ArvoreEstrutural from '@/components/equipamentos/ArvoreEstrutural';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -368,8 +369,9 @@ export default function Equipamentos() {
                 </form>
               ) : (
                 <Tabs defaultValue="dados" className="mt-4">
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="dados">Dados Técnicos</TabsTrigger>
+                    <TabsTrigger value="arvore" className="gap-1.5"><GitBranchPlus className="h-3.5 w-3.5" />Árvore</TabsTrigger>
                     <TabsTrigger value="manutencao">Manutenção</TabsTrigger>
                     <TabsTrigger value="info">Informações</TabsTrigger>
                   </TabsList>
@@ -391,6 +393,10 @@ export default function Equipamentos() {
                         <Pencil className="h-4 w-4" />Editar Dados
                       </Button>
                     </div>
+                  </TabsContent>
+
+                  <TabsContent value="arvore" className="mt-4">
+                    <ArvoreEstrutural equipamentoId={selected.id} equipamentoTag={selected.tag} />
                   </TabsContent>
 
                   <TabsContent value="manutencao" className="space-y-4 mt-4">

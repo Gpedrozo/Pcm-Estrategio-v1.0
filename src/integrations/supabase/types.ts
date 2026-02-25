@@ -177,6 +177,76 @@ export type Database = {
           },
         ]
       }
+      componentes_equipamento: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          criticidade: string
+          empresa_id: string | null
+          equipamento_id: string
+          id: string
+          nome: string
+          observacoes: string | null
+          ordem: number
+          parent_id: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          criticidade?: string
+          empresa_id?: string | null
+          equipamento_id: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          ordem?: number
+          parent_id?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          criticidade?: string
+          empresa_id?: string | null
+          equipamento_id?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          ordem?: number
+          parent_id?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "componentes_equipamento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "componentes_equipamento_equipamento_id_fkey"
+            columns: ["equipamento_id"]
+            isOneToOne: false
+            referencedRelation: "equipamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "componentes_equipamento_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "componentes_equipamento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contratos: {
         Row: {
           created_at: string
