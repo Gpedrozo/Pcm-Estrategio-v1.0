@@ -1,12 +1,13 @@
 import { useEmpresa } from '@/contexts/EmpresaContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import type { Database } from '@/integrations/supabase/types';
 
 type TableName = keyof Database['public']['Tables'];
 
 /**
  * Hook centralizado para queries multi-empresa.
+ * Estabilizado com useMemo para evitar re-renders infinitos.
  */
 export function useEmpresaQuery() {
   const { empresa } = useEmpresa();
