@@ -1,32 +1,25 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CalendarClock } from 'lucide-react';
 
 export default function Programacao() {
+  const { fromEmpresa } = useEmpresaQuery();
   const [planos, setPlanos] = useState<any[]>([]);
   const [lubrificacao, setLubrificacao] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      supabase.from('planos_preventivos').select('*').eq('ativo', true).order('proxima_execucao'),
-      supabase.from('lubrificacao').select('*').eq('ativo', true).order('proxima_execucao'),
-    ]).then(([p, l]) => {
-      setPlanos(p.data || []);
-      setLubrificacao(l.data || []);
-      setIsLoading(false);
-    });
-  }, []);
+      fromEmpresa('planos_preventivos').eq('ativo', true).order('proxima_execucao'),
+      fromEmpresa('lubrificacao').eq('ativo', true).order('proxima_execucao'),
+    ]).then(([p, l]) => { setPlanos(p.data || []); setLubrificacao(l.data || []); setIsLoading(false); });
+  }, [fromEmpresa]);
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
-  const allItems = [
-    ...planos.map(p => ({ ...p, _tipo: 'Preventiva', _nome: p.nome })),
-    ...lubrificacao.map(l => ({ ...l, _tipo: 'Lubrificação', _nome: l.ponto })),
-  ].sort((a, b) => new Date(a.proxima_execucao).getTime() - new Date(b.proxima_execucao).getTime());
-
+  const allItems = [...planos.map(p => ({ ...p, _tipo: 'Preventiva', _nome: p.nome })), ...lubrificacao.map(l => ({ ...l, _tipo: 'Lubrificação', _nome: l.ponto }))].sort((a, b) => new Date(a.proxima_execucao).getTime() - new Date(b.proxima_execucao).getTime());
   const isOverdue = (d: string) => new Date(d) < new Date();
 
   return (

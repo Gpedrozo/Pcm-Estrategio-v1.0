@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,23 +15,24 @@ type Criticidade = Database['public']['Enums']['criticidade_abc'];
 type NivelRisco = Database['public']['Enums']['nivel_risco'];
 
 export default function Equipamentos() {
+  const { fromEmpresa, insertWithEmpresa } = useEmpresaQuery();
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ tag: '', nome: '', criticidade: 'C' as Criticidade, nivel_risco: 'BAIXO' as NivelRisco, localizacao: '', fabricante: '', modelo: '' });
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [fromEmpresa]);
 
   async function load() {
-    const { data } = await supabase.from('equipamentos').select('*').order('tag');
+    const { data } = await fromEmpresa('equipamentos').order('tag');
     setItems(data || []);
     setIsLoading(false);
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from('equipamentos').insert(form);
+    const { error } = await insertWithEmpresa('equipamentos', form);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Equipamento cadastrado!' });
     setDialogOpen(false);

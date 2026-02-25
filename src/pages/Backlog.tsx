@@ -1,27 +1,22 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search } from 'lucide-react';
 
 export default function Backlog() {
+  const { fromEmpresa } = useEmpresaQuery();
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  useEffect(() => { load(); }, []);
-
-  async function load() {
-    const { data } = await supabase.from('ordens_servico').select('*').neq('status', 'FECHADA').order('prioridade');
-    setItems(data || []);
-    setIsLoading(false);
-  }
+  useEffect(() => { load(); }, [fromEmpresa]);
+  async function load() { const { data } = await fromEmpresa('ordens_servico').neq('status', 'FECHADA').order('prioridade'); setItems(data || []); setIsLoading(false); }
 
   const filtered = items.filter(i => !search || i.tag?.toLowerCase().includes(search.toLowerCase()) || i.equipamento?.toLowerCase().includes(search.toLowerCase()));
-  const prioColor = (p: string) => p === 'URGENTE' ? 'destructive' : p === 'ALTA' ? 'destructive' : 'secondary';
+  const prioColor = (p: string) => p === 'URGENTE' || p === 'ALTA' ? 'destructive' : 'secondary';
   const statusLabel: Record<string, string> = { ABERTA: 'Aberta', EM_ANDAMENTO: 'Em Andamento', AGUARDANDO_MATERIAL: 'Ag. Material', AGUARDANDO_APROVACAO: 'Ag. Aprovação' };
-
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   return (
