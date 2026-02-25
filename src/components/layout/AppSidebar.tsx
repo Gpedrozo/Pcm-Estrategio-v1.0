@@ -43,6 +43,7 @@ const analisesMenuItems: MenuItem[] = [
   { title: 'FMEA/RCM', url: '/fmea', icon: FileSearch },
   { title: 'Causa Raiz', url: '/rca', icon: TrendingUp },
   { title: 'Melhorias', url: '/melhorias', icon: Lightbulb },
+  { title: 'Análise IA', url: '/analise-ia', icon: Brain },
 ];
 
 const cadastroMenuItems: MenuItem[] = [
@@ -58,7 +59,6 @@ const cadastroMenuItems: MenuItem[] = [
 const relatoriosMenuItems: MenuItem[] = [
   { title: 'Custos', url: '/custos', icon: DollarSign },
   { title: 'Relatórios', url: '/relatorios', icon: BarChart3 },
-  { title: 'Análise IA', url: '/analise-ia', icon: Brain },
 ];
 
 const ssmaMenuItems: MenuItem[] = [

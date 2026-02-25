@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -40,7 +41,7 @@ export default function AnaliseIA() {
   const printRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState('analise');
 
-  // Filtros
+  // Filtros de análise
   const [modoAnalise, setModoAnalise] = useState<ModoAnalise>('top-problemas');
   const [equipamentos, setEquipamentos] = useState<{ tag: string; nome: string }[]>([]);
   const [tagSelecionada, setTagSelecionada] = useState('');
@@ -51,6 +52,10 @@ export default function AnaliseIA() {
   const [historico, setHistorico] = useState<HistoricoItem[]>([]);
   const [loadingHistorico, setLoadingHistorico] = useState(false);
   const [historicoSelecionado, setHistoricoSelecionado] = useState<HistoricoItem | null>(null);
+
+  // Filtros do histórico
+  const [filtroModo, setFiltroModo] = useState<string>('todos');
+  const [filtroBusca, setFiltroBusca] = useState('');
 
   useEffect(() => {
     if (empresa?.id) {
@@ -189,8 +194,6 @@ export default function AnaliseIA() {
       }
 
       setDataGeracao(new Date().toLocaleString('pt-BR'));
-
-      // Salvar no histórico
       if (fullText) await salvarHistorico(fullText);
 
     } catch (error: any) {
@@ -214,9 +217,9 @@ export default function AnaliseIA() {
   const getModoLabel = (modo?: string) => {
     const m = modo || modoAnalise;
     switch (m) {
-      case 'equipamento': return 'Por Equipamento';
-      case 'periodo': return 'Por Período';
-      case 'top-problemas': return 'Maiores Problemas';
+      case 'equipamento': return 'Equipamento';
+      case 'periodo': return 'Período';
+      case 'top-problemas': return 'Top Problemas';
       default: return m;
     }
   };
@@ -224,271 +227,273 @@ export default function AnaliseIA() {
   const getModoLabelFull = () => {
     switch (modoAnalise) {
       case 'equipamento': return `Equipamento: ${tagSelecionada}`;
-      case 'periodo': return `Período: ${dataInicio ? format(dataInicio, 'dd/MM/yy') : ''} - ${dataFim ? format(dataFim, 'dd/MM/yy') : ''}`;
-      case 'top-problemas': return 'Maiores Problemas';
+      case 'periodo': return `${dataInicio ? format(dataInicio, 'dd/MM/yy') : ''} — ${dataFim ? format(dataFim, 'dd/MM/yy') : ''}`;
+      case 'top-problemas': return 'Top Problemas';
     }
   };
 
+  // Filtrar histórico
+  const historicoFiltrado = historico.filter((item) => {
+    if (filtroModo !== 'todos' && item.modo !== filtroModo) return false;
+    if (filtroBusca) {
+      const busca = filtroBusca.toLowerCase();
+      const matchTag = item.tag?.toLowerCase().includes(busca);
+      const matchUser = item.usuario_nome.toLowerCase().includes(busca);
+      const matchDate = format(new Date(item.created_at), 'dd/MM/yyyy').includes(busca);
+      if (!matchTag && !matchUser && !matchDate) return false;
+    }
+    return true;
+  });
+
   const modos = [
-    { value: 'equipamento' as ModoAnalise, icon: Wrench, label: 'Por Equipamento', desc: 'Analisa um equipamento específico' },
-    { value: 'periodo' as ModoAnalise, icon: CalendarIcon, label: 'Por Período', desc: 'Analisa um intervalo de datas' },
-    { value: 'top-problemas' as ModoAnalise, icon: TrendingUp, label: 'Maiores Problemas', desc: 'Foca nos equipamentos mais problemáticos' },
+    { value: 'equipamento' as ModoAnalise, icon: Wrench, label: 'Equipamento', desc: 'Analisa uma TAG específica' },
+    { value: 'periodo' as ModoAnalise, icon: CalendarIcon, label: 'Período', desc: 'Intervalo de datas' },
+    { value: 'top-problemas' as ModoAnalise, icon: TrendingUp, label: 'Top Problemas', desc: 'Maiores incidências' },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="page-header flex items-center justify-between no-print">
+      <div className="flex items-center justify-between no-print">
         <div>
-          <h1 className="page-title flex items-center gap-2">
-            <Brain className="h-7 w-7 text-primary" />
-            Análise Inteligente (IA)
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground">
+            <Brain className="h-6 w-6 text-primary" />
+            Análise IA
           </h1>
-          <p className="page-subtitle">
-            Análise preditiva baseada em IA — selecione o modo de análise desejado
-          </p>
+          <p className="text-sm text-muted-foreground">Diagnóstico inteligente de manutenção</p>
         </div>
-        <div className="flex gap-2">
-          {analise && (
-            <Button variant="outline" onClick={() => window.print()} className="gap-2">
-              <Printer className="h-4 w-4" />
-              Imprimir
-            </Button>
-          )}
-        </div>
+        {analise && (
+          <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
+            <Printer className="h-4 w-4" /> Imprimir
+          </Button>
+        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="no-print">
         <TabsList>
-          <TabsTrigger value="analise" className="gap-2">
-            <Brain className="h-4 w-4" />
-            Nova Análise
+          <TabsTrigger value="analise" className="gap-1.5">
+            <Brain className="h-4 w-4" /> Nova Análise
           </TabsTrigger>
-          <TabsTrigger value="historico" className="gap-2">
-            <History className="h-4 w-4" />
-            Histórico
+          <TabsTrigger value="historico" className="gap-1.5">
+            <History className="h-4 w-4" /> Histórico
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="analise" className="space-y-6 mt-4">
-          {/* Seleção de modo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* ─── Nova Análise ─── */}
+        <TabsContent value="analise" className="space-y-4 mt-4">
+          {/* Modo cards */}
+          <div className="grid grid-cols-3 gap-3">
             {modos.map((m) => {
               const Icon = m.icon;
-              const selected = modoAnalise === m.value;
+              const sel = modoAnalise === m.value;
               return (
-                <Card
+                <button
                   key={m.value}
-                  className={cn(
-                    'cursor-pointer transition-all border-2 hover:shadow-md',
-                    selected ? 'border-primary bg-primary/5 shadow-md' : 'border-border hover:border-primary/40'
-                  )}
                   onClick={() => { setModoAnalise(m.value); setAnalise(''); }}
+                  className={cn(
+                    'flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all',
+                    sel ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
+                  )}
                 >
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className={cn('p-3 rounded-xl', selected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className={cn('font-semibold', selected && 'text-primary')}>{m.label}</p>
-                      <p className="text-xs text-muted-foreground">{m.desc}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div className={cn('p-2 rounded-lg', sel ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className={cn('font-medium text-sm', sel && 'text-primary')}>{m.label}</p>
+                    <p className="text-xs text-muted-foreground">{m.desc}</p>
+                  </div>
+                </button>
               );
             })}
           </div>
 
-          {/* Filtros dinâmicos */}
-          <Card className="card-industrial">
-            <CardContent className="p-4">
-              <div className="flex flex-wrap items-end gap-4">
-                {modoAnalise === 'equipamento' && (
-                  <div className="flex-1 min-w-[250px]">
-                    <label className="text-sm font-medium text-foreground mb-1.5 block">Equipamento</label>
-                    <Select value={tagSelecionada} onValueChange={setTagSelecionada}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o equipamento..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {equipamentos.map((eq) => (
-                          <SelectItem key={eq.tag} value={eq.tag}>
-                            <span className="font-mono font-semibold">{eq.tag}</span>
-                            <span className="text-muted-foreground ml-2">— {eq.nome}</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {modoAnalise === 'periodo' && (
-                  <>
-                    <div>
-                      <label className="text-sm font-medium text-foreground mb-1.5 block">Data Início</label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn('w-[180px] justify-start text-left font-normal', !dataInicio && 'text-muted-foreground')}>
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {dataInicio ? format(dataInicio, 'dd/MM/yyyy') : 'Selecione'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={dataInicio} onSelect={setDataInicio} locale={ptBR} className="p-3 pointer-events-auto" />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-foreground mb-1.5 block">Data Fim</label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn('w-[180px] justify-start text-left font-normal', !dataFim && 'text-muted-foreground')}>
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {dataFim ? format(dataFim, 'dd/MM/yyyy') : 'Selecione'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={dataFim} onSelect={setDataFim} locale={ptBR} className="p-3 pointer-events-auto" />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </>
-                )}
-
-                {modoAnalise === 'top-problemas' && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    A IA irá identificar automaticamente os equipamentos com maior incidência de problemas.
-                  </div>
-                )}
-
-                <Button onClick={handleAnalise} disabled={isLoading} className="btn-industrial gap-2 ml-auto" size="lg">
-                  {isLoading ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" />Analisando...</>
-                  ) : (
-                    <><Search className="h-4 w-4" />Analisar</>
-                  )}
-                </Button>
+          {/* Filtros + botão */}
+          <div className="flex flex-wrap items-end gap-3">
+            {modoAnalise === 'equipamento' && (
+              <div className="flex-1 min-w-[220px]">
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Equipamento</label>
+                <Select value={tagSelecionada} onValueChange={setTagSelecionada}>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                  <SelectContent>
+                    {equipamentos.map((eq) => (
+                      <SelectItem key={eq.tag} value={eq.tag}>
+                        <span className="font-mono font-semibold">{eq.tag}</span>
+                        <span className="text-muted-foreground ml-2">— {eq.nome}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
+            )}
 
-          {/* Empty state */}
+            {modoAnalise === 'periodo' && (
+              <>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Início</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn('w-[160px] justify-start text-left font-normal', !dataInicio && 'text-muted-foreground')}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dataInicio ? format(dataInicio, 'dd/MM/yyyy') : 'Selecione'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={dataInicio} onSelect={setDataInicio} locale={ptBR} className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Fim</label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn('w-[160px] justify-start text-left font-normal', !dataFim && 'text-muted-foreground')}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dataFim ? format(dataFim, 'dd/MM/yyyy') : 'Selecione'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={dataFim} onSelect={setDataFim} locale={ptBR} className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </>
+            )}
+
+            {modoAnalise === 'top-problemas' && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                A IA identifica automaticamente os equipamentos mais problemáticos.
+              </p>
+            )}
+
+            <Button onClick={handleAnalise} disabled={isLoading} className="gap-2 ml-auto">
+              {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Analisando...</> : <><Search className="h-4 w-4" />Analisar</>}
+            </Button>
+          </div>
+
+          {/* Empty / Loading */}
           {!analise && !isLoading && (
-            <Card className="card-industrial">
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <Brain className="h-14 w-14 text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Selecione o modo e clique em Analisar</h3>
-                <p className="text-muted-foreground max-w-lg text-sm">
-                  Escolha analisar por equipamento específico, por período de tempo, ou deixe a IA encontrar os maiores problemas automaticamente.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg border-dashed border-border">
+              <Brain className="h-10 w-10 text-muted-foreground/30 mb-3" />
+              <p className="text-sm text-muted-foreground">Selecione o modo e clique em <strong>Analisar</strong></p>
+            </div>
           )}
-
-          {/* Loading */}
           {isLoading && !analise && (
-            <Card className="card-industrial">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-                <p className="text-muted-foreground">Analisando dados de manutenção com IA...</p>
-                <p className="text-xs text-muted-foreground/60 mt-2">Isso pode levar alguns segundos</p>
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-10 w-10 animate-spin text-primary mb-3" />
+              <p className="text-sm text-muted-foreground">Analisando dados com IA...</p>
+            </div>
           )}
         </TabsContent>
 
+        {/* ─── Histórico ─── */}
         <TabsContent value="historico" className="space-y-4 mt-4">
-          <Card className="card-industrial">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5 text-primary" />
-                Histórico de Análises
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingHistorico ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                </div>
-              ) : historico.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <History className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                  <p>Nenhuma análise realizada ainda.</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Modo</TableHead>
-                      <TableHead>Detalhes</TableHead>
-                      <TableHead>Usuário</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {historico.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="whitespace-nowrap text-sm">
-                          {format(new Date(item.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{getModoLabel(item.modo)}</Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {item.modo === 'equipamento' && item.tag && <span className="font-mono font-semibold text-foreground">{item.tag}</span>}
-                          {item.modo === 'periodo' && item.data_inicio && item.data_fim && (
-                            <span>{format(new Date(item.data_inicio), 'dd/MM/yy')} — {format(new Date(item.data_fim), 'dd/MM/yy')}</span>
-                          )}
-                          {item.modo === 'top-problemas' && <span>Análise geral</span>}
-                        </TableCell>
-                        <TableCell className="text-sm">{item.usuario_nome}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex gap-1 justify-end">
-                            <Button variant="ghost" size="icon" onClick={() => setHistoricoSelecionado(item)} title="Visualizar">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDeleteHistorico(item.id)} title="Excluir" className="text-destructive hover:text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          {/* Filtros do histórico */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[200px]">
+              <Input
+                placeholder="Buscar por TAG, usuário ou data..."
+                value={filtroBusca}
+                onChange={(e) => setFiltroBusca(e.target.value)}
+                className="h-9"
+              />
+            </div>
+            <Select value={filtroModo} onValueChange={setFiltroModo}>
+              <SelectTrigger className="w-[180px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os modos</SelectItem>
+                <SelectItem value="equipamento">Equipamento</SelectItem>
+                <SelectItem value="periodo">Período</SelectItem>
+                <SelectItem value="top-problemas">Top Problemas</SelectItem>
+              </SelectContent>
+            </Select>
+            <Badge variant="secondary" className="text-xs">
+              {historicoFiltrado.length} resultado{historicoFiltrado.length !== 1 && 's'}
+            </Badge>
+          </div>
+
+          {loadingHistorico ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : historicoFiltrado.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed border-border">
+              <History className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">{historico.length === 0 ? 'Nenhuma análise realizada ainda.' : 'Nenhum resultado para os filtros aplicados.'}</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Modo</TableHead>
+                  <TableHead>Detalhes</TableHead>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {historicoFiltrado.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {format(new Date(item.created_at), "dd/MM/yy HH:mm", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">{getModoLabel(item.modo)}</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {item.modo === 'equipamento' && item.tag && <span className="font-mono font-semibold text-foreground">{item.tag}</span>}
+                      {item.modo === 'periodo' && item.data_inicio && item.data_fim && (
+                        <span>{format(new Date(item.data_inicio), 'dd/MM/yy')} — {format(new Date(item.data_fim), 'dd/MM/yy')}</span>
+                      )}
+                      {item.modo === 'top-problemas' && <span>Geral</span>}
+                    </TableCell>
+                    <TableCell className="text-sm">{item.usuario_nome}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-1 justify-end">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setHistoricoSelecionado(item)} title="Ver">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteHistorico(item.id)} title="Excluir">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </TabsContent>
       </Tabs>
 
-      {/* Resultado da análise atual (fora das tabs para impressão) */}
+      {/* Resultado (fora das tabs para impressão) */}
       {analise && (
         <div ref={printRef}>
-          <div className="hidden print:block mb-6 pb-4 border-b-2 border-foreground">
+          <div className="hidden print:block mb-4 pb-3 border-b-2 border-foreground">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-lg font-bold">{empresa?.nome || 'PCM ESTRATÉGICO'}</h1>
-                <p className="text-xs">Sistema de Gestão de Manutenção Industrial</p>
+                <p className="text-xs">Manutenção Industrial</p>
               </div>
               <div className="text-right text-xs">
                 <p className="font-semibold">Análise IA — {getModoLabelFull()}</p>
-                <p>Gerado em: {dataGeracao}</p>
+                <p>{dataGeracao}</p>
               </div>
             </div>
           </div>
 
-          <Card className="card-industrial print:shadow-none print:border-0">
-            <CardHeader className="no-print">
+          <Card className="print:shadow-none print:border-0">
+            <CardHeader className="no-print pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-primary" />
-                  Resultado da Análise
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Brain className="h-4 w-4 text-primary" />
+                  Resultado
                 </CardTitle>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline">{getModoLabelFull()}</Badge>
-                  <span className="text-xs text-muted-foreground">{dataGeracao && `Gerado em: ${dataGeracao}`}</span>
+                  <Badge variant="outline" className="text-xs">{getModoLabelFull()}</Badge>
+                  {dataGeracao && <span className="text-xs text-muted-foreground">{dataGeracao}</span>}
                 </div>
               </div>
             </CardHeader>
@@ -499,7 +504,7 @@ export default function AnaliseIA() {
             </CardContent>
           </Card>
 
-          <div className="hidden print:block mt-8 pt-2 border-t text-xs text-muted-foreground">
+          <div className="hidden print:block mt-6 pt-2 border-t text-xs text-muted-foreground">
             <div className="flex justify-between">
               <span>PCM ESTRATÉGICO — {empresa?.nome}</span>
               <span>{dataGeracao}</span>
@@ -508,18 +513,18 @@ export default function AnaliseIA() {
         </div>
       )}
 
-      {/* Dialog para visualizar histórico */}
+      {/* Dialog histórico */}
       <Dialog open={!!historicoSelecionado} onOpenChange={() => setHistoricoSelecionado(null)}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-primary" />
-              Análise — {historicoSelecionado && getModoLabel(historicoSelecionado.modo)}
-              {historicoSelecionado?.tag && <Badge variant="outline" className="ml-2 font-mono">{historicoSelecionado.tag}</Badge>}
+              {historicoSelecionado && getModoLabel(historicoSelecionado.modo)}
+              {historicoSelecionado?.tag && <Badge variant="outline" className="ml-1 font-mono text-xs">{historicoSelecionado.tag}</Badge>}
             </DialogTitle>
             {historicoSelecionado && (
               <p className="text-xs text-muted-foreground">
-                {format(new Date(historicoSelecionado.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })} — por {historicoSelecionado.usuario_nome}
+                {format(new Date(historicoSelecionado.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })} — {historicoSelecionado.usuario_nome}
               </p>
             )}
           </DialogHeader>
