@@ -88,6 +88,63 @@ export type Database = {
           },
         ]
       }
+      arquivos_equipamento: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          empresa_id: string | null
+          equipamento_id: string
+          id: string
+          nome_arquivo: string
+          nome_original: string
+          storage_path: string
+          tamanho_bytes: number | null
+          tipo: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string | null
+          equipamento_id: string
+          id?: string
+          nome_arquivo: string
+          nome_original: string
+          storage_path: string
+          tamanho_bytes?: number | null
+          tipo?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          empresa_id?: string | null
+          equipamento_id?: string
+          id?: string
+          nome_arquivo?: string
+          nome_original?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
+          tipo?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arquivos_equipamento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arquivos_equipamento_equipamento_id_fkey"
+            columns: ["equipamento_id"]
+            isOneToOne: false
+            referencedRelation: "equipamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assinaturas: {
         Row: {
           created_at: string
