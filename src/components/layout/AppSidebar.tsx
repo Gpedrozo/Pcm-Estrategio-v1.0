@@ -169,6 +169,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {renderMenuLink({ title: 'Painel Master', url: '/master-ti', icon: Crown })}
+                {renderMenuLink({ title: '🌐 Portal de Gestão', url: '/admin', icon: Crown })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

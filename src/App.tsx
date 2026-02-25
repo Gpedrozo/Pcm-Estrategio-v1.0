@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { EmpresaProvider } from "@/contexts/EmpresaContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -38,6 +39,16 @@ import Auditoria from "./pages/Auditoria";
 import MasterTI from "./pages/MasterTI";
 import AnaliseIA from "./pages/AnaliseIA";
 import NotFound from "./pages/NotFound";
+
+// Admin Portal
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminEmpresas from "./pages/admin/AdminEmpresas";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminPlanos from "./pages/admin/AdminPlanos";
+import AdminAssinaturas from "./pages/admin/AdminAssinaturas";
+import AdminMetricas from "./pages/admin/AdminMetricas";
+import AdminPermissoes from "./pages/admin/AdminPermissoes";
+import AdminConfig from "./pages/admin/AdminConfig";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +93,18 @@ const App = () => (
               <Route path="/auditoria" element={<Auditoria />} />
               <Route path="/analise-ia" element={<AnaliseIA />} />
               <Route path="/master-ti" element={<MasterTI />} />
+            </Route>
+
+            {/* Portal Admin — MASTER_TI only */}
+            <Route element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/empresas" element={<AdminEmpresas />} />
+              <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+              <Route path="/admin/planos" element={<AdminPlanos />} />
+              <Route path="/admin/assinaturas" element={<AdminAssinaturas />} />
+              <Route path="/admin/metricas" element={<AdminMetricas />} />
+              <Route path="/admin/permissoes" element={<AdminPermissoes />} />
+              <Route path="/admin/config" element={<AdminConfig />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
