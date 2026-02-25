@@ -24,6 +24,29 @@ export type Profile = Tables<'profiles'>;
 export type PlanoSaas = Tables<'planos_saas'>;
 export type Assinatura = Tables<'assinaturas'>;
 
+// Dashboard Indicators
+export interface Indicadores {
+  osAbertas: number;
+  osEmAndamento: number;
+  osFechadas: number;
+  tempoMedioExecucao: number;
+  mtbf: number;
+  mttr: number;
+  disponibilidade: number;
+  backlogQuantidade: number;
+  backlogTempo: number;
+  backlogSemanas: number;
+  aderenciaProgramacao: number;
+  custoTotalMes: number;
+  custoMaoObraMes: number;
+  custoMateriaisMes: number;
+  custoTerceirosMes: number;
+}
+
+export type StatusOS = 'ABERTA' | 'EM_ANDAMENTO' | 'AGUARDANDO_MATERIAL' | 'AGUARDANDO_APROVACAO' | 'FECHADA';
+export type TipoOS = 'CORRETIVA' | 'PREVENTIVA' | 'PREDITIVA' | 'INSPECAO' | 'MELHORIA';
+export type PrioridadeOS = 'URGENTE' | 'ALTA' | 'MEDIA' | 'BAIXA';
+
 // Module mapping for sidebar/route protection
 export const MODULO_ROTAS: Record<string, string[]> = {
   dashboard: ['/dashboard'],
