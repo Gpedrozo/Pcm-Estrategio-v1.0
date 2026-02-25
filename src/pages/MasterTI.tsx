@@ -429,7 +429,7 @@ export default function MasterTI() {
             <Card><CardHeader><CardTitle>Informações do Sistema</CardTitle></CardHeader><CardContent className="space-y-3">
               {[
                 ['Versão', 'PCM v4.0'],
-                ['Backend', 'Lovable Cloud'],
+                ['Backend', 'Supabase Cloud'],
                 ['Banco de Dados', 'PostgreSQL'],
                 ['Ambiente', 'Produção'],
                 ['Empresa do Admin', minhaEmpresa?.nome || '-'],
