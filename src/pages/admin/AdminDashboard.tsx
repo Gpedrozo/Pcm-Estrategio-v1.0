@@ -1,29 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Building2, Users, FileText, Wrench, Shield, TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
+import { Loader2, Building2, Users, FileText, Wrench, Shield, TrendingUp, AlertTriangle, CheckCircle2, DollarSign, Activity } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend } from 'recharts';
 
 const COLORS = ['hsl(199,89%,48%)', 'hsl(142,72%,29%)', 'hsl(38,92%,50%)', 'hsl(0,72%,51%)', 'hsl(213,56%,24%)'];
 
 export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({ empresas: 0, empresasAtivas: 0, usuarios: 0, os: 0, osAbertas: 0, osFechadas: 0, equipamentos: 0, auditoria: 0, planos: 0, assinaturasAtivas: 0 });
+  const [stats, setStats] = useState({ empresas: 0, empresasAtivas: 0, usuarios: 0, os: 0, osAbertas: 0, osFechadas: 0, equipamentos: 0, auditoria: 0, planos: 0, assinaturasAtivas: 0, urgentes: 0 });
   const [empresas, setEmpresas] = useState<any[]>([]);
   const [osData, setOsData] = useState<any[]>([]);
   const [osTipoData, setOsTipoData] = useState<any[]>([]);
   const [empresaOsData, setEmpresaOsData] = useState<any[]>([]);
+  const [tendenciaData, setTendenciaData] = useState<any[]>([]);
+  const [prioData, setPrioData] = useState<any[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   async function loadData() {
     const [empRes, profRes, osRes, eqRes, audRes, plRes, assRes] = await Promise.all([
       supabase.from('empresas').select('*'),
       supabase.from('profiles').select('id, empresa_id'),
-      supabase.from('ordens_servico').select('id, status, tipo, empresa_id, created_at'),
+      supabase.from('ordens_servico').select('id, status, tipo, prioridade, empresa_id, created_at'),
       supabase.from('equipamentos').select('id', { count: 'exact', head: true }),
       supabase.from('auditoria').select('id', { count: 'exact', head: true }),
       supabase.from('planos_saas').select('id', { count: 'exact', head: true }),
@@ -46,17 +46,23 @@ export default function AdminDashboard() {
       auditoria: audRes.count || 0,
       planos: plRes.count || 0,
       assinaturasAtivas: assRes.data?.length || 0,
+      urgentes: os.filter(o => o.prioridade === 'URGENTE' && o.status !== 'FECHADA').length,
     });
 
     // OS por status
     const statusCount: Record<string, number> = {};
     os.forEach(o => { statusCount[o.status] = (statusCount[o.status] || 0) + 1; });
-    setOsData(Object.entries(statusCount).map(([name, value]) => ({ name, value })));
+    setOsData(Object.entries(statusCount).map(([name, value]) => ({ name: name.replace(/_/g, ' '), value })));
 
     // OS por tipo
     const tipoCount: Record<string, number> = {};
     os.forEach(o => { tipoCount[o.tipo] = (tipoCount[o.tipo] || 0) + 1; });
     setOsTipoData(Object.entries(tipoCount).map(([name, value]) => ({ name, value })));
+
+    // OS por prioridade
+    const prioCount: Record<string, number> = {};
+    os.forEach(o => { prioCount[o.prioridade] = (prioCount[o.prioridade] || 0) + 1; });
+    setPrioData(Object.entries(prioCount).map(([name, value]) => ({ name, value })));
 
     // OS por empresa
     const empOsCount: Record<string, number> = {};
@@ -65,6 +71,17 @@ export default function AdminDashboard() {
       empOsCount[empNome] = (empOsCount[empNome] || 0) + 1;
     });
     setEmpresaOsData(Object.entries(empOsCount).map(([name, os]) => ({ name, os })).sort((a, b) => b.os - a.os).slice(0, 10));
+
+    // Tendência mensal
+    const months: Record<string, { criadas: number; fechadas: number }> = {};
+    os.forEach(o => {
+      const d = new Date(o.created_at);
+      const key = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(2)}`;
+      if (!months[key]) months[key] = { criadas: 0, fechadas: 0 };
+      months[key].criadas++;
+      if (o.status === 'FECHADA') months[key].fechadas++;
+    });
+    setTendenciaData(Object.entries(months).sort(([a], [b]) => a.localeCompare(b)).slice(-12).map(([mes, v]) => ({ mes, ...v })));
 
     setIsLoading(false);
   }
@@ -77,6 +94,15 @@ export default function AdminDashboard() {
         <h1 className="text-2xl font-bold">Dashboard Administrativo</h1>
         <p className="text-muted-foreground text-sm">Visão geral de todos os sistemas e empresas</p>
       </div>
+
+      {stats.urgentes > 0 && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <p className="text-sm font-medium text-destructive">{stats.urgentes} OS urgente(s) em aberto em todas as empresas</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPIs Principais */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -105,7 +131,7 @@ export default function AdminDashboard() {
       {/* KPIs Secundários */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card><CardContent className="p-4 text-center">
-          <CreditCard className="h-6 w-6 mx-auto text-primary mb-2" />
+          <DollarSign className="h-6 w-6 mx-auto text-primary mb-2" />
           <p className="text-xl font-bold">{stats.planos}</p>
           <p className="text-xs text-muted-foreground">Planos Cadastrados</p>
         </CardContent></Card>
@@ -126,14 +152,32 @@ export default function AdminDashboard() {
         </CardContent></Card>
       </div>
 
+      {/* Tendência */}
+      <Card><CardHeader><CardTitle className="text-sm">Tendência Mensal — Criadas vs Fechadas (Todas as Empresas)</CardTitle></CardHeader>
+        <CardContent className="h-72">
+          {tendenciaData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={tendenciaData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="mes" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Legend />
+                <Area type="monotone" dataKey="criadas" name="Criadas" stroke="hsl(var(--warning))" fill="hsl(var(--warning))" fillOpacity={0.15} strokeWidth={2} />
+                <Area type="monotone" dataKey="fechadas" name="Fechadas" stroke="hsl(var(--success))" fill="hsl(var(--success))" fillOpacity={0.15} strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : <p className="text-center text-muted-foreground py-8">Sem dados</p>}
+        </CardContent>
+      </Card>
+
       {/* Gráficos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* OS por Status */}
-        <Card><CardHeader><CardTitle className="text-sm">OS por Status (Todas as Empresas)</CardTitle></CardHeader>
-          <CardContent className="h-72">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card><CardHeader><CardTitle className="text-sm">OS por Status</CardTitle></CardHeader>
+          <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={osData} cx="50%" cy="50%" outerRadius={90} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
+                <Pie data={osData} cx="50%" cy="50%" innerRadius={40} outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
                   {osData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip />
@@ -142,9 +186,8 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* OS por Tipo */}
         <Card><CardHeader><CardTitle className="text-sm">OS por Tipo</CardTitle></CardHeader>
-          <CardContent className="h-72">
+          <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={osTipoData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -157,21 +200,37 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* OS por Empresa */}
-        <Card className="md:col-span-2"><CardHeader><CardTitle className="text-sm">Volume de OS por Empresa (Top 10)</CardTitle></CardHeader>
-          <CardContent className="h-72">
+        <Card><CardHeader><CardTitle className="text-sm">OS por Prioridade</CardTitle></CardHeader>
+          <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={empresaOsData} layout="vertical">
+              <BarChart data={prioData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip />
-                <Bar dataKey="os" fill="hsl(199,89%,48%)" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {prioData.map((e, i) => <Cell key={i} fill={e.name === 'URGENTE' ? 'hsl(0,72%,51%)' : e.name === 'ALTA' ? 'hsl(38,92%,50%)' : COLORS[i % COLORS.length]} />)}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
+
+      {/* OS por Empresa */}
+      <Card><CardHeader><CardTitle className="text-sm">Volume de OS por Empresa (Top 10)</CardTitle></CardHeader>
+        <CardContent className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={empresaOsData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis type="number" tick={{ fontSize: 10 }} />
+              <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Bar dataKey="os" fill="hsl(199,89%,48%)" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Empresas Overview */}
       <Card>
@@ -187,7 +246,7 @@ export default function AdminDashboard() {
                 <th className="p-3 text-left font-medium">Cadastro</th>
               </tr></thead>
               <tbody>
-                {empresas.slice(0, 5).map(e => (
+                {empresas.slice(0, 10).map(e => (
                   <tr key={e.id} className="border-b hover:bg-muted/30">
                     <td className="p-3 font-medium">{e.nome}</td>
                     <td className="p-3 font-mono text-xs">{e.cnpj || '-'}</td>
@@ -203,8 +262,4 @@ export default function AdminDashboard() {
       </Card>
     </div>
   );
-}
-
-function CreditCard(props: any) {
-  return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>;
 }
