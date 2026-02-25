@@ -1,34 +1,27 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, DollarSign, TrendingUp, Wrench } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function Custos() {
+  const { fromEmpresa } = useEmpresaQuery();
   const [os, setOs] = useState<any[]>([]);
   const [execucoes, setExecucoes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      supabase.from('ordens_servico').select('*').order('created_at', { ascending: false }),
-      supabase.from('execucoes_os').select('*'),
-    ]).then(([o, e]) => {
-      setOs(o.data || []);
-      setExecucoes(e.data || []);
-      setIsLoading(false);
-    });
-  }, []);
+      fromEmpresa('ordens_servico').order('created_at', { ascending: false }),
+      fromEmpresa('execucoes_os'),
+    ]).then(([o, e]) => { setOs(o.data || []); setExecucoes(e.data || []); setIsLoading(false); });
+  }, [fromEmpresa]);
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   const totalCustoExec = execucoes.reduce((sum, e) => sum + (e.custo_total || 0), 0);
   const totalCustoEst = os.reduce((sum, e) => sum + (e.custo_estimado || 0), 0);
-
-  const custosPorTipo = os.reduce((acc: Record<string, number>, item) => {
-    acc[item.tipo] = (acc[item.tipo] || 0) + (item.custo_estimado || 0);
-    return acc;
-  }, {});
+  const custosPorTipo = os.reduce((acc: Record<string, number>, item) => { acc[item.tipo] = (acc[item.tipo] || 0) + (item.custo_estimado || 0); return acc; }, {});
   const chartData = Object.entries(custosPorTipo).map(([tipo, valor]) => ({ tipo, valor }));
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--destructive))', '#f59e0b', '#10b981', '#8b5cf6'];
 

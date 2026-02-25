@@ -1,27 +1,23 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Activity, TrendingUp, AlertTriangle } from 'lucide-react';
 
 export default function Preditiva() {
+  const { fromEmpresa } = useEmpresaQuery();
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
   const [os, setOs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      supabase.from('equipamentos').select('*').eq('ativo', true).order('tag'),
-      supabase.from('ordens_servico').select('*').eq('tipo', 'PREDITIVA').order('created_at', { ascending: false }).limit(20),
-    ]).then(([e, o]) => {
-      setEquipamentos(e.data || []);
-      setOs(o.data || []);
-      setIsLoading(false);
-    });
-  }, []);
+      fromEmpresa('equipamentos').eq('ativo', true).order('tag'),
+      fromEmpresa('ordens_servico').eq('tipo', 'PREDITIVA').order('created_at', { ascending: false }).limit(20),
+    ]).then(([e, o]) => { setEquipamentos(e.data || []); setOs(o.data || []); setIsLoading(false); });
+  }, [fromEmpresa]);
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-
   const criticos = equipamentos.filter(e => e.criticidade === 'A');
 
   return (

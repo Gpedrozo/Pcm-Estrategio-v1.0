@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEmpresa } from '@/contexts/EmpresaContext';
+import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
 import {
   FileText, FilePlus, FileCheck, Clock, Activity, Gauge,
-  Target, TrendingUp, DollarSign, Calendar, Loader2
+  Target, TrendingUp, Calendar, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,8 @@ interface DashboardData {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { empresa } = useEmpresa();
+  const { fromEmpresa } = useEmpresaQuery();
   const [data, setData] = useState<DashboardData>({
     osAbertas: 0, osEmAndamento: 0, osFechadas: 0, osTotal: 0,
     equipamentosAtivos: 0, planosAtivos: 0, osRecentes: [],
@@ -32,9 +35,9 @@ export default function Dashboard() {
     async function loadData() {
       try {
         const [osRes, equipRes, planosRes] = await Promise.all([
-          supabase.from('ordens_servico').select('id, numero_os, tipo, prioridade, tag, equipamento, status, data_solicitacao').order('created_at', { ascending: false }).limit(100),
-          supabase.from('equipamentos').select('id').eq('ativo', true),
-          supabase.from('planos_preventivos').select('id').eq('ativo', true),
+          fromEmpresa('ordens_servico').order('created_at', { ascending: false }).limit(100),
+          fromEmpresa('equipamentos').eq('ativo', true),
+          fromEmpresa('planos_preventivos').eq('ativo', true),
         ]);
 
         const os = osRes.data || [];
@@ -54,7 +57,7 @@ export default function Dashboard() {
       }
     }
     loadData();
-  }, []);
+  }, [fromEmpresa]);
 
   const indicators = [
     { title: 'OS Abertas', value: data.osAbertas, icon: FileText, color: 'text-warning' },
@@ -67,31 +70,23 @@ export default function Dashboard() {
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
-      ABERTA: 'status-aberta',
-      EM_ANDAMENTO: 'status-andamento',
-      FECHADA: 'status-fechada',
-      AGUARDANDO_MATERIAL: 'status-aguardando',
-      AGUARDANDO_APROVACAO: 'status-aguardando',
+      ABERTA: 'status-aberta', EM_ANDAMENTO: 'status-andamento',
+      FECHADA: 'status-fechada', AGUARDANDO_MATERIAL: 'status-aguardando', AGUARDANDO_APROVACAO: 'status-aguardando',
     };
     return <span className={`px-2 py-1 rounded text-xs font-medium ${map[status] || ''}`}>{status.replace(/_/g, ' ')}</span>;
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="page-header">
         <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">Bem-vindo, {user?.nome}. Visão geral do sistema de manutenção.</p>
+        <p className="page-subtitle">Bem-vindo, {user?.nome}. {empresa?.nome ? `Empresa: ${empresa.nome}` : 'Visão geral do sistema de manutenção.'}</p>
       </div>
 
-      {/* Indicadores */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {indicators.map((ind) => (
           <Card key={ind.title} className="card-industrial">
@@ -106,54 +101,22 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Ações Rápidas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Link to="/os/nova">
-          <Button className="w-full h-12 btn-industrial gap-2">
-            <FilePlus className="h-4 w-4" /> Nova O.S
-          </Button>
-        </Link>
-        <Link to="/os/fechar">
-          <Button variant="outline" className="w-full h-12 btn-industrial-secondary gap-2">
-            <FileCheck className="h-4 w-4" /> Fechar O.S
-          </Button>
-        </Link>
-        <Link to="/backlog">
-          <Button variant="outline" className="w-full h-12 btn-industrial-secondary gap-2">
-            <Target className="h-4 w-4" /> Backlog
-          </Button>
-        </Link>
-        <Link to="/relatorios">
-          <Button variant="outline" className="w-full h-12 btn-industrial-secondary gap-2">
-            <TrendingUp className="h-4 w-4" /> Relatórios
-          </Button>
-        </Link>
+        <Link to="/os/nova"><Button className="w-full h-12 btn-industrial gap-2"><FilePlus className="h-4 w-4" /> Nova O.S</Button></Link>
+        <Link to="/os/fechar"><Button variant="outline" className="w-full h-12 btn-industrial-secondary gap-2"><FileCheck className="h-4 w-4" /> Fechar O.S</Button></Link>
+        <Link to="/backlog"><Button variant="outline" className="w-full h-12 btn-industrial-secondary gap-2"><Target className="h-4 w-4" /> Backlog</Button></Link>
+        <Link to="/relatorios"><Button variant="outline" className="w-full h-12 btn-industrial-secondary gap-2"><TrendingUp className="h-4 w-4" /> Relatórios</Button></Link>
       </div>
 
-      {/* OS Recentes */}
       <Card className="card-industrial">
-        <CardHeader>
-          <CardTitle className="text-lg">Últimas Ordens de Serviço</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-lg">Últimas Ordens de Serviço</CardTitle></CardHeader>
         <CardContent>
           {data.osRecentes.length === 0 ? (
-            <p className="text-muted-foreground text-sm text-center py-8">
-              Nenhuma ordem de serviço encontrada. Crie a primeira!
-            </p>
+            <p className="text-muted-foreground text-sm text-center py-8">Nenhuma ordem de serviço encontrada. Crie a primeira!</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="table-industrial">
-                <thead>
-                  <tr>
-                    <th>Nº</th>
-                    <th>Tipo</th>
-                    <th>TAG</th>
-                    <th>Equipamento</th>
-                    <th>Prioridade</th>
-                    <th>Status</th>
-                    <th>Data</th>
-                  </tr>
-                </thead>
+                <thead><tr><th>Nº</th><th>Tipo</th><th>TAG</th><th>Equipamento</th><th>Prioridade</th><th>Status</th><th>Data</th></tr></thead>
                 <tbody>
                   {data.osRecentes.map((os) => (
                     <tr key={os.id}>

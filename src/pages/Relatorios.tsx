@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, BarChart3, FileText, Wrench, AlertTriangle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Relatorios() {
+  const { fromEmpresa } = useEmpresaQuery();
   const [os, setOs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    supabase.from('ordens_servico').select('*').order('created_at', { ascending: false }).then(({ data }) => {
-      setOs(data || []);
-      setIsLoading(false);
-    });
-  }, []);
+    fromEmpresa('ordens_servico').order('created_at', { ascending: false }).then(({ data }) => { setOs(data || []); setIsLoading(false); });
+  }, [fromEmpresa]);
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
@@ -21,7 +19,6 @@ export default function Relatorios() {
   const byTipo = os.reduce((acc: Record<string, number>, i) => { acc[i.tipo] = (acc[i.tipo] || 0) + 1; return acc; }, {});
   const statusData = Object.entries(byStatus).map(([name, value]) => ({ name, value }));
   const tipoData = Object.entries(byTipo).map(([name, value]) => ({ name, value }));
-
   const abertas = os.filter(o => o.status !== 'FECHADA').length;
   const fechadas = os.filter(o => o.status === 'FECHADA').length;
 
