@@ -582,6 +582,53 @@ export type Database = {
           },
         ]
       }
+      historico_analises_ia: {
+        Row: {
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          empresa_id: string | null
+          id: string
+          modo: string
+          resultado: string
+          tag: string | null
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          empresa_id?: string | null
+          id?: string
+          modo?: string
+          resultado: string
+          tag?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          empresa_id?: string | null
+          id?: string
+          modo?: string
+          resultado?: string
+          tag?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_analises_ia_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspecoes: {
         Row: {
           created_at: string
