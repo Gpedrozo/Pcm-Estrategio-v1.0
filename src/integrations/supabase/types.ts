@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      analise_causa_raiz: {
+        Row: {
+          acao_corretiva: string | null
+          causa_raiz_identificada: string | null
+          created_at: string
+          data_falha: string
+          descricao_falha: string
+          equipamento: string
+          id: string
+          metodo: string
+          porque_1: string | null
+          porque_2: string | null
+          porque_3: string | null
+          porque_4: string | null
+          porque_5: string | null
+          prazo: string | null
+          responsavel: string | null
+          status: string
+          tag: string
+          updated_at: string
+        }
+        Insert: {
+          acao_corretiva?: string | null
+          causa_raiz_identificada?: string | null
+          created_at?: string
+          data_falha?: string
+          descricao_falha: string
+          equipamento: string
+          id?: string
+          metodo?: string
+          porque_1?: string | null
+          porque_2?: string | null
+          porque_3?: string | null
+          porque_4?: string | null
+          porque_5?: string | null
+          prazo?: string | null
+          responsavel?: string | null
+          status?: string
+          tag: string
+          updated_at?: string
+        }
+        Update: {
+          acao_corretiva?: string | null
+          causa_raiz_identificada?: string | null
+          created_at?: string
+          data_falha?: string
+          descricao_falha?: string
+          equipamento?: string
+          id?: string
+          metodo?: string
+          porque_1?: string | null
+          porque_2?: string | null
+          porque_3?: string | null
+          porque_4?: string | null
+          porque_5?: string | null
+          prazo?: string | null
+          responsavel?: string | null
+          status?: string
+          tag?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       auditoria: {
         Row: {
           acao: string
@@ -93,6 +156,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      documentos_tecnicos: {
+        Row: {
+          codigo: string
+          created_at: string
+          data_validade: string | null
+          descricao: string | null
+          id: string
+          responsavel: string | null
+          status: string
+          tags_associadas: string[] | null
+          tipo: string
+          titulo: string
+          updated_at: string
+          versao: string | null
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          data_validade?: string | null
+          descricao?: string | null
+          id?: string
+          responsavel?: string | null
+          status?: string
+          tags_associadas?: string[] | null
+          tipo?: string
+          titulo: string
+          updated_at?: string
+          versao?: string | null
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          data_validade?: string | null
+          descricao?: string | null
+          id?: string
+          responsavel?: string | null
+          status?: string
+          tags_associadas?: string[] | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          versao?: string | null
+        }
+        Relationships: []
       }
       equipamentos: {
         Row: {
@@ -307,6 +415,51 @@ export type Database = {
         }
         Relationships: []
       }
+      inspecoes: {
+        Row: {
+          created_at: string
+          data_inspecao: string
+          equipamento: string
+          id: string
+          observacoes: string | null
+          proxima_inspecao: string | null
+          responsavel: string | null
+          resultado: string | null
+          status: string
+          tag: string
+          tipo_inspecao: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_inspecao?: string
+          equipamento: string
+          id?: string
+          observacoes?: string | null
+          proxima_inspecao?: string | null
+          responsavel?: string | null
+          resultado?: string | null
+          status?: string
+          tag: string
+          tipo_inspecao?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_inspecao?: string
+          equipamento?: string
+          id?: string
+          observacoes?: string | null
+          proxima_inspecao?: string | null
+          responsavel?: string | null
+          resultado?: string | null
+          status?: string
+          tag?: string
+          tipo_inspecao?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lubrificacao: {
         Row: {
           ativo: boolean
@@ -483,6 +636,54 @@ export type Database = {
           nome?: string
           telefone?: string | null
           tipo?: Database["public"]["Enums"]["tipo_mecanico"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      melhorias: {
+        Row: {
+          area: string | null
+          beneficio_esperado: string | null
+          created_at: string
+          custo_estimado: number | null
+          descricao: string
+          id: string
+          prazo: string | null
+          prioridade: string
+          responsavel: string | null
+          status: string
+          tag: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          beneficio_esperado?: string | null
+          created_at?: string
+          custo_estimado?: number | null
+          descricao: string
+          id?: string
+          prazo?: string | null
+          prioridade?: string
+          responsavel?: string | null
+          status?: string
+          tag?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          beneficio_esperado?: string | null
+          created_at?: string
+          custo_estimado?: number | null
+          descricao?: string
+          id?: string
+          prazo?: string | null
+          prioridade?: string
+          responsavel?: string | null
+          status?: string
+          tag?: string | null
+          titulo?: string
           updated_at?: string
         }
         Relationships: []
@@ -731,6 +932,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ssma_registros: {
+        Row: {
+          acao_tomada: string | null
+          created_at: string
+          data_ocorrencia: string
+          descricao: string
+          gravidade: string
+          id: string
+          local: string | null
+          responsavel: string | null
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          acao_tomada?: string | null
+          created_at?: string
+          data_ocorrencia?: string
+          descricao: string
+          gravidade?: string
+          id?: string
+          local?: string | null
+          responsavel?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          acao_tomada?: string | null
+          created_at?: string
+          data_ocorrencia?: string
+          descricao?: string
+          gravidade?: string
+          id?: string
+          local?: string | null
+          responsavel?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

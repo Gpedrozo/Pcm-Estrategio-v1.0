@@ -13,14 +13,29 @@ import NovaOS from "./pages/NovaOS";
 import FecharOS from "./pages/FecharOS";
 import HistoricoOS from "./pages/HistoricoOS";
 import Equipamentos from "./pages/Equipamentos";
+import Solicitacoes from "./pages/Solicitacoes";
+import Backlog from "./pages/Backlog";
+import Lubrificacao from "./pages/Lubrificacao";
+import Programacao from "./pages/Programacao";
+import Preventiva from "./pages/Preventiva";
+import Preditiva from "./pages/Preditiva";
+import Inspecoes from "./pages/Inspecoes";
+import FMEAPage from "./pages/FMEAPage";
+import RCAPage from "./pages/RCAPage";
+import MelhoriasPage from "./pages/MelhoriasPage";
+import Hierarquia from "./pages/Hierarquia";
+import Mecanicos from "./pages/Mecanicos";
+import Materiais from "./pages/Materiais";
+import Fornecedores from "./pages/Fornecedores";
+import Contratos from "./pages/Contratos";
+import DocumentosTecnicos from "./pages/DocumentosTecnicos";
+import Custos from "./pages/Custos";
+import Relatorios from "./pages/Relatorios";
+import SSMAPage from "./pages/SSMAPage";
+import Usuarios from "./pages/Usuarios";
+import Auditoria from "./pages/Auditoria";
+import MasterTI from "./pages/MasterTI";
 import NotFound from "./pages/NotFound";
-import {
-  Solicitacoes, Backlog, Programacao, Preventiva, Preditiva,
-  Inspecoes, FMEA, RCA, Melhorias, Hierarquia, Mecanicos,
-  Materiais, Fornecedores, Contratos, DocumentosTecnicos,
-  Lubrificacao, Custos, Relatorios, SSMA, Usuarios,
-  Auditoria, MasterTI
-} from "./pages/ModulePages";
 
 const queryClient = new QueryClient();
 
@@ -46,9 +61,9 @@ const App = () => (
               <Route path="/preventiva" element={<Preventiva />} />
               <Route path="/preditiva" element={<Preditiva />} />
               <Route path="/inspecoes" element={<Inspecoes />} />
-              <Route path="/fmea" element={<FMEA />} />
-              <Route path="/rca" element={<RCA />} />
-              <Route path="/melhorias" element={<Melhorias />} />
+              <Route path="/fmea" element={<FMEAPage />} />
+              <Route path="/rca" element={<RCAPage />} />
+              <Route path="/melhorias" element={<MelhoriasPage />} />
               <Route path="/hierarquia" element={<Hierarquia />} />
               <Route path="/equipamentos" element={<Equipamentos />} />
               <Route path="/mecanicos" element={<Mecanicos />} />
@@ -59,7 +74,7 @@ const App = () => (
               <Route path="/lubrificacao" element={<Lubrificacao />} />
               <Route path="/custos" element={<Custos />} />
               <Route path="/relatorios" element={<Relatorios />} />
-              <Route path="/ssma" element={<SSMA />} />
+              <Route path="/ssma" element={<SSMAPage />} />
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/auditoria" element={<Auditoria />} />
               <Route path="/master-ti" element={<MasterTI />} />
