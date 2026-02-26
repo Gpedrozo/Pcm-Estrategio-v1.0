@@ -53,7 +53,7 @@ export function AdminLayout() {
               <img src={gppisLogo} alt="GPPIS" className="h-8 w-8 rounded" />
               <div>
                 <p className="text-xs font-bold" style={{ color: 'hsl(var(--sidebar-foreground))' }}>GPPIS</p>
-                <p className="text-[10px]" style={{ color: 'hsl(var(--sidebar-primary))' }}>Portal de Gestão</p>
+                <p className="text-[10px]" style={{ color: 'hsl(var(--sidebar-primary))' }}>Admin da Plataforma</p>
               </div>
             </div>
           )}
@@ -122,7 +122,7 @@ export function AdminLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 border-b border-border bg-card flex items-center px-6 gap-4 shrink-0">
           <Crown className="h-5 w-5 text-primary" />
-          <h1 className="text-sm font-bold text-foreground">Portal de Gestão GPPIS</h1>
+          <h1 className="text-sm font-bold text-foreground">Admin da Plataforma GPPIS</h1>
           <div className="flex-1" />
           <span className="text-xs text-muted-foreground hidden md:block">
             {new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

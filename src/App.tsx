@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { EmpresaProvider } from "@/contexts/EmpresaContext";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -39,6 +39,8 @@ import Auditoria from "./pages/Auditoria";
 import MasterTI from "./pages/MasterTI";
 import AnaliseIA from "./pages/AnaliseIA";
 import NotFound from "./pages/NotFound";
+import SiteHome from "./pages/SiteHome";
+import SystemPortal from "./pages/SystemPortal";
 
 // Admin Portal
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -61,7 +63,10 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<SiteHome />} />
+            <Route path="/portal" element={<SystemPortal />} />
+            <Route path="/acessar-sistema" element={<Navigate to="/portal" replace />} />
+            <Route path="/start" element={<Index />} />
             <Route path="/login" element={<Login />} />
 
             <Route element={<AppLayout />}>
