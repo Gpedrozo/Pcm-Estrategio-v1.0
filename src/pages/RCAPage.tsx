@@ -15,7 +15,7 @@ import { toast } from '@/hooks/use-toast';
 const FORM_INITIAL = { tag: '', equipamento: '', descricao_falha: '', metodo: '5_PORQUES', porque_1: '', porque_2: '', porque_3: '', porque_4: '', porque_5: '', causa_raiz_identificada: '', acao_corretiva: '', responsavel: '' };
 
 export default function RCAPage() {
-  const { fromEmpresa, insertWithEmpresa } = useEmpresaQuery();
+  const { fromEmpresa, insertWithEmpresa, empresaId } = useEmpresaQuery();
   const [items, setItems] = useState<any[]>([]);
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +45,9 @@ export default function RCAPage() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault(); if (!selected) return; setSaving(true);
-    const { error } = await supabase.from('analise_causa_raiz').update(form).eq('id', selected.id);
+    let query = supabase.from('analise_causa_raiz').update(form).eq('id', selected.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Análise atualizada!' }); setSelected(null); setEditMode(false); setSaving(false); load();
   };

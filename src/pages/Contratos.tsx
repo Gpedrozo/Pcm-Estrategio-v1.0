@@ -15,7 +15,7 @@ import { toast } from '@/hooks/use-toast';
 const FORM_INITIAL = { numero: '', fornecedor_nome: '', descricao: '', valor: 0, data_inicio: '', data_fim: '' };
 
 export default function Contratos() {
-  const { fromEmpresa, insertWithEmpresa } = useEmpresaQuery();
+  const { fromEmpresa, insertWithEmpresa, empresaId } = useEmpresaQuery();
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -45,7 +45,9 @@ export default function Contratos() {
     const payload: any = { ...form };
     if (!payload.data_inicio) payload.data_inicio = null;
     if (!payload.data_fim) payload.data_fim = null;
-    const { error } = await supabase.from('contratos').update(payload).eq('id', selected.id);
+    let query = supabase.from('contratos').update(payload).eq('id', selected.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Contrato atualizado!' }); setDetailOpen(false); setEditMode(false); setSaving(false); load();
   };

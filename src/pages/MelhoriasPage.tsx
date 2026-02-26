@@ -15,7 +15,7 @@ import { toast } from '@/hooks/use-toast';
 const FORM_INITIAL = { titulo: '', descricao: '', area: '', tag: '', beneficio_esperado: '', custo_estimado: 0, responsavel: '', prioridade: 'MEDIA' };
 
 export default function MelhoriasPage() {
-  const { fromEmpresa, insertWithEmpresa } = useEmpresaQuery();
+  const { fromEmpresa, insertWithEmpresa, empresaId } = useEmpresaQuery();
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -38,13 +38,17 @@ export default function MelhoriasPage() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault(); if (!selected) return; setSaving(true);
-    const { error } = await supabase.from('melhorias').update(form).eq('id', selected.id);
+    let query = supabase.from('melhorias').update(form).eq('id', selected.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Melhoria atualizada!' }); setSelected(null); setEditMode(false); setSaving(false); load();
   };
 
   const handleChangeStatus = async (item: any, status: string) => {
-    const { error } = await supabase.from('melhorias').update({ status }).eq('id', item.id);
+    let query = supabase.from('melhorias').update({ status }).eq('id', item.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: `Status: ${status}` }); setSelected(null); load();
   };

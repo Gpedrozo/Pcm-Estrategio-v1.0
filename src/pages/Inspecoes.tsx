@@ -13,7 +13,7 @@ import { Loader2, Plus, Search, ClipboardCheck, AlertTriangle, CheckCircle2, Clo
 import { toast } from '@/hooks/use-toast';
 
 export default function Inspecoes() {
-  const { fromEmpresa, insertWithEmpresa } = useEmpresaQuery();
+  const { fromEmpresa, insertWithEmpresa, empresaId } = useEmpresaQuery();
   const [items, setItems] = useState<any[]>([]);
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,7 +41,9 @@ export default function Inspecoes() {
   };
 
   const handleUpdateStatus = async (item: any, status: string) => {
-    const { error } = await supabase.from('inspecoes').update({ status }).eq('id', item.id);
+    let query = supabase.from('inspecoes').update({ status }).eq('id', item.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: `Status atualizado para ${status}` }); setSelected(null); load();
   };

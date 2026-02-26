@@ -14,7 +14,7 @@ import { toast } from '@/hooks/use-toast';
 const FORM_INITIAL = { tag: '', equipamento: '', ponto: '', lubrificante: '', quantidade: '', periodicidade: 'MENSAL' as const, responsavel: '' };
 
 export default function Lubrificacao() {
-  const { fromEmpresa, insertWithEmpresa } = useEmpresaQuery();
+  const { fromEmpresa, insertWithEmpresa, empresaId } = useEmpresaQuery();
   const [items, setItems] = useState<any[]>([]);
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,13 +44,20 @@ export default function Lubrificacao() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault(); if (!selected) return; setSaving(true);
-    const { error } = await supabase.from('lubrificacao').update({ ponto: form.ponto, lubrificante: form.lubrificante, quantidade: form.quantidade || null, periodicidade: form.periodicidade, responsavel: form.responsavel || null }).eq('id', selected.id);
+    let query = supabase
+      .from('lubrificacao')
+      .update({ ponto: form.ponto, lubrificante: form.lubrificante, quantidade: form.quantidade || null, periodicidade: form.periodicidade, responsavel: form.responsavel || null })
+      .eq('id', selected.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Plano atualizado!' }); setDetailOpen(false); setEditMode(false); setSaving(false); load();
   };
 
   const handleToggleAtivo = async (item: any) => {
-    const { error } = await supabase.from('lubrificacao').update({ ativo: !item.ativo }).eq('id', item.id);
+    let query = supabase.from('lubrificacao').update({ ativo: !item.ativo }).eq('id', item.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: item.ativo ? 'Plano desativado' : 'Plano ativado' }); load();
   };

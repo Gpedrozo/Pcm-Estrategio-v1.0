@@ -32,7 +32,7 @@ interface MaterialUsado { id: string; nome: string; codigo: string; custo_unitar
 export default function FecharOS() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { fromEmpresa } = useEmpresaQuery();
+  const { fromEmpresa, empresaId } = useEmpresaQuery();
   const [ordens, setOrdens] = useState<any[]>([]);
   const [mecanicos, setMecanicos] = useState<any[]>([]);
   const [materiaisDisp, setMateriaisDisp] = useState<any[]>([]);
@@ -114,31 +114,43 @@ export default function FecharOS() {
       const custoTotal = custoMO + custoMateriais + custoTerc;
 
       // Create execution record
-      const { data: empresaData } = await supabase.from('profiles').select('empresa_id').eq('id', user!.id).maybeSingle();
-      await supabase.from('execucoes_os').insert({
+      const { data: execucaoCriada, error: execucaoError } = await supabase
+        .from('execucoes_os')
+        .insert({
         os_id: selectedOS.id, mecanico_id: execForm.mecanicoId, mecanico_nome: selectedMecanico.nome,
         hora_inicio: execForm.horaInicio, hora_fim: execForm.horaFim, tempo_execucao: tempoExec,
         servico_executado: execForm.servicoExecutado, custo_mao_obra: custoMO, custo_materiais: custoMateriais,
-        custo_terceiros: custoTerc, custo_total: custoTotal, empresa_id: empresaData?.empresa_id,
-      });
+        custo_terceiros: custoTerc, custo_total: custoTotal, empresa_id: empresaId,
+      })
+        .select('id')
+        .single();
+
+      if (execucaoError || !execucaoCriada) {
+        throw execucaoError || new Error('Não foi possível criar execução da O.S.');
+      }
 
       // Add materials
       for (const mat of materiaisUsados) {
-        await supabase.from('materiais_utilizados').insert({
-          execucao_id: selectedOS.id, material_id: mat.id, material_nome: mat.nome,
+        const { error: matError } = await supabase.from('materiais_utilizados').insert({
+          execucao_id: execucaoCriada.id, material_id: mat.id, material_nome: mat.nome,
           quantidade: mat.quantidade, custo_unitario: mat.custo_unitario,
-          custo_total: mat.quantidade * mat.custo_unitario, empresa_id: empresaData?.empresa_id,
+          custo_total: mat.quantidade * mat.custo_unitario, empresa_id: empresaId,
         });
+        if (matError) throw matError;
       }
 
       // Update OS
-      await supabase.from('ordens_servico').update({
+      let updateQuery = supabase.from('ordens_servico').update({
         status: 'FECHADA', data_fechamento: new Date().toISOString(), usuario_fechamento: user?.nome,
         modo_falha: isCorretiva ? rcaForm.modoFalha || null : null,
         causa_raiz: isCorretiva ? rcaForm.causaRaiz || null : null,
         acao_corretiva: isCorretiva ? rcaForm.acaoCorretiva || null : null,
         licoes_aprendidas: rcaForm.licoesAprendidas || null,
       }).eq('id', selectedOS.id);
+
+      if (empresaId) updateQuery = updateQuery.eq('empresa_id', empresaId);
+      const { error: osError } = await updateQuery;
+      if (osError) throw osError;
 
       toast({ title: `O.S #${selectedOS.numero_os} fechada com sucesso!`, description: `Custo total: R$ ${custoTotal.toFixed(2)}` });
       navigate('/os/historico');

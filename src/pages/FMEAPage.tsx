@@ -15,7 +15,7 @@ import { toast } from '@/hooks/use-toast';
 const FORM_INITIAL = { tag: '', componente: '', modo_falha: '', efeito_falha: '', causa_potencial: '', severidade: 5, ocorrencia: 5, deteccao: 5, acao_recomendada: '', responsavel: '' };
 
 export default function FMEAPage() {
-  const { fromEmpresa, insertWithEmpresa } = useEmpresaQuery();
+  const { fromEmpresa, insertWithEmpresa, empresaId } = useEmpresaQuery();
   const [items, setItems] = useState<any[]>([]);
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,7 +45,9 @@ export default function FMEAPage() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault(); if (!selected) return; setSaving(true);
     const rpn = form.severidade * form.ocorrencia * form.deteccao;
-    const { error } = await supabase.from('fmea').update({ ...form, rpn }).eq('id', selected.id);
+    let query = supabase.from('fmea').update({ ...form, rpn }).eq('id', selected.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'FMEA atualizada!' }); setSelected(null); setEditMode(false); setSaving(false); load();
   };

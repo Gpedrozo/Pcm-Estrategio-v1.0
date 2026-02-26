@@ -205,7 +205,11 @@ export default function AnaliseIA() {
   };
 
   const handleDeleteHistorico = async (id: string) => {
-    const { error } = await supabase.from('historico_analises_ia').delete().eq('id', id);
+    const { error } = await supabase
+      .from('historico_analises_ia')
+      .delete()
+      .eq('id', id)
+      .eq('empresa_id', empresa?.id || '');
     if (error) {
       toast({ title: 'Erro', description: 'Não foi possível excluir.', variant: 'destructive' });
     } else {

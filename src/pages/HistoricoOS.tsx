@@ -14,7 +14,6 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--info))', 'hsl(var(--warning))', 'hsl(var(--success))', 'hsl(var(--destructive))'];
 
@@ -81,7 +80,7 @@ export default function HistoricoOS() {
 
   const handleViewOS = async (os: any) => {
     setSelectedOS(os);
-    const { data } = await supabase.from('execucoes_os').select('*').eq('os_id', os.id).maybeSingle();
+    const { data } = await fromEmpresa('execucoes_os').eq('os_id', os.id).maybeSingle();
     setExecucao(data);
   };
 

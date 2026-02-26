@@ -1,20 +1,30 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search } from 'lucide-react';
 
+interface AuditoriaItem {
+  id: string;
+  acao: string;
+  usuario_nome: string;
+  descricao: string;
+  tag: string | null;
+  created_at: string;
+}
+
 export default function Auditoria() {
-  const [items, setItems] = useState<any[]>([]);
+  const { fromEmpresa } = useEmpresaQuery();
+  const [items, setItems] = useState<AuditoriaItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   useEffect(() => { load(); }, []);
 
   async function load() {
-    const { data } = await supabase.from('auditoria').select('*').order('created_at', { ascending: false }).limit(200);
-    setItems(data || []);
+    const { data } = await fromEmpresa('auditoria').order('created_at', { ascending: false }).limit(200);
+    setItems((data || []) as AuditoriaItem[]);
     setIsLoading(false);
   }
 

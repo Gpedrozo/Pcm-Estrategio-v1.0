@@ -99,7 +99,9 @@ export default function Equipamentos() {
     if (!payload.data_instalacao) payload.data_instalacao = null;
     if (!payload.numero_serie) payload.numero_serie = null;
 
-    const { error } = await supabase.from('equipamentos').update(payload).eq('id', selected.id);
+    let query = supabase.from('equipamentos').update(payload).eq('id', selected.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Equipamento atualizado!' });
     setDetailOpen(false);
@@ -109,7 +111,9 @@ export default function Equipamentos() {
   };
 
   const handleToggleAtivo = async (equip: Equipamento) => {
-    const { error } = await supabase.from('equipamentos').update({ ativo: !equip.ativo }).eq('id', equip.id);
+    let query = supabase.from('equipamentos').update({ ativo: !equip.ativo }).eq('id', equip.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: equip.ativo ? 'Equipamento desativado' : 'Equipamento ativado' });
     load();

@@ -15,7 +15,7 @@ import { toast } from '@/hooks/use-toast';
 const FORM_INITIAL = { codigo: '', titulo: '', tipo: 'POP', descricao: '', versao: '1.0', responsavel: '' };
 
 export default function DocumentosTecnicos() {
-  const { fromEmpresa, insertWithEmpresa } = useEmpresaQuery();
+  const { fromEmpresa, insertWithEmpresa, empresaId } = useEmpresaQuery();
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -39,7 +39,9 @@ export default function DocumentosTecnicos() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault(); if (!selected) return; setSaving(true);
-    const { error } = await supabase.from('documentos_tecnicos').update(form).eq('id', selected.id);
+    let query = supabase.from('documentos_tecnicos').update(form).eq('id', selected.id);
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+    const { error } = await query;
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Documento atualizado!' }); setDetailOpen(false); setEditMode(false); setSaving(false); load();
   };
