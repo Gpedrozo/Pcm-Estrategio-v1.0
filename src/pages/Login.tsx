@@ -64,7 +64,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src={gppisLogo} alt="GPPIS Industrial Systems" className="h-20 w-auto mb-4" />
+          <img src={gppisLogo} alt="GPPIS Industrial Systems" className="h-20 w-auto mb-4 mx-auto block" />
           <h1 className="text-2xl font-bold text-foreground">PCM ESTRATÉGICO</h1>
           <p className="text-muted-foreground mt-1">Sistema de Gestão de Manutenção Industrial</p>
         </div>
