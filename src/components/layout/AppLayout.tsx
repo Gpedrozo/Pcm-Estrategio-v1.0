@@ -6,7 +6,7 @@ import { useEmpresa } from '@/contexts/EmpresaContext';
 import { getRouteModule } from '@/config/routeModules';
 import { MODULES } from '@/constants/modules';
 import { Menu, Loader2 } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,6 +17,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const routeModule = useMemo(() => getRouteModule(location.pathname), [location.pathname]);
+  const lastBlockedPathRef = useRef<string | null>(null);
   const allowed = useMemo(() => {
     if (!routeModule) return false;
     if (routeModule === MODULES.DASHBOARD) return true;
@@ -30,11 +31,14 @@ export function AppLayout() {
 
     if (!routeModule) {
       if (location.pathname !== '/dashboard') {
-        toast({
-          title: 'Rota não permitida',
-          description: 'Esta rota não está mapeada para acesso no sistema.',
-          variant: 'destructive',
-        });
+        if (lastBlockedPathRef.current !== location.pathname) {
+          lastBlockedPathRef.current = location.pathname;
+          toast({
+            title: 'Rota não permitida',
+            description: 'Esta rota não está mapeada para acesso no sistema.',
+            variant: 'destructive',
+          });
+        }
         navigate('/dashboard', { replace: true });
       }
       return;
@@ -42,13 +46,18 @@ export function AppLayout() {
 
     if (!allowed) {
       if (location.pathname !== '/dashboard') {
-        toast({
-          title: 'Módulo não disponível',
-          description: 'Este módulo não está incluído no seu plano atual.',
-          variant: 'destructive',
-        });
+        if (lastBlockedPathRef.current !== location.pathname) {
+          lastBlockedPathRef.current = location.pathname;
+          toast({
+            title: 'Módulo não disponível',
+            description: 'Este módulo não está incluído no seu plano atual.',
+            variant: 'destructive',
+          });
+        }
         navigate('/dashboard', { replace: true });
       }
+    } else {
+      lastBlockedPathRef.current = null;
     }
   }, [
     allowed,
