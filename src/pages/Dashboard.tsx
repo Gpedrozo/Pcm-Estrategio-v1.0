@@ -57,6 +57,7 @@ export default function Dashboard() {
 
   const defaultIndicadores = {
     osAbertas: 0, osEmAndamento: 0, osFechadas: 0, tempoMedioExecucao: 0,
+    tempoMedioAtendimento: 0,
     mtbf: 720, mttr: 0, disponibilidade: 100, backlogQuantidade: 0,
     backlogTempo: 0, backlogSemanas: 0, aderenciaProgramacao: 0,
     custoTotalMes: 0, custoMaoObraMes: 0, custoMateriaisMes: 0, custoTerceirosMes: 0,
@@ -87,7 +88,7 @@ export default function Dashboard() {
           <IndicatorCard title="O.S Abertas" value={ind.osAbertas} subtitle="Aguardando atendimento" icon={FileText} variant="warning" />
           <IndicatorCard title="Em Andamento" value={ind.osEmAndamento} subtitle="Em execução" icon={FilePlus} variant="info" />
           <IndicatorCard title="O.S Fechadas" value={ind.osFechadas} subtitle="Este mês" icon={FileCheck} variant="success" />
-          <IndicatorCard title="Tempo Médio" value={formatMinutes(ind.tempoMedioExecucao)} subtitle="Tempo de execução" icon={Clock} variant="primary" />
+          <IndicatorCard title="Tempo Atendimento" value={formatMinutes(ind.tempoMedioAtendimento)} subtitle="Da abertura ao início" icon={Clock} variant="primary" />
         </div>
       </div>
 

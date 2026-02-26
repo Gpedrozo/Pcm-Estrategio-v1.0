@@ -31,6 +31,7 @@ export interface Indicadores {
   osEmAndamento: number;
   osFechadas: number;
   tempoMedioExecucao: number;
+  tempoMedioAtendimento: number;
   mtbf: number;
   mttr: number;
   disponibilidade: number;

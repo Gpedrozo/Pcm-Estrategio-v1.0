@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
+import { useEmpresa } from '@/contexts/EmpresaContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,10 @@ export default function HistoricoOS() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOS, setSelectedOS] = useState<any>(null);
   const [execucao, setExecucao] = useState<any>(null);
+  const [materiaisOS, setMateriaisOS] = useState<any[]>([]);
+  const [timelineOS, setTimelineOS] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('lista');
+  const { empresa } = useEmpresa();
 
   const [filters, setFilters] = useState({
     search: '', status: '', tipo: '', prioridade: '', tag: '',
@@ -68,6 +72,14 @@ export default function HistoricoOS() {
       byStatus[os.status] = (byStatus[os.status] || 0) + 1;
     });
     const fechadas = filtered.filter(o => o.status === 'FECHADA').length;
+    const falhasEquipamentoCount: Record<string, number> = {};
+    filtered
+      .filter((o) => o.status === 'FECHADA' && (o.tipo === 'CORRETIVA' || o.causa_falha_classificacao))
+      .forEach((o) => {
+        const key = `${o.tag} - ${o.equipamento}`;
+        falhasEquipamentoCount[key] = (falhasEquipamentoCount[key] || 0) + 1;
+      });
+
     return {
       total: filtered.length,
       fechadas,
@@ -75,13 +87,31 @@ export default function HistoricoOS() {
       taxaFechamento: ((fechadas / filtered.length) * 100).toFixed(1),
       byType: Object.entries(byType).map(([name, value]) => ({ name, value })),
       byStatus: Object.entries(byStatus).map(([name, value]) => ({ name: name.replace(/_/g, ' '), value })),
+      falhasEquipamento: Object.entries(falhasEquipamentoCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([equipamento, total]) => ({ equipamento, total })),
     };
   }, [filtered]);
 
   const handleViewOS = async (os: any) => {
     setSelectedOS(os);
-    const { data } = await fromEmpresa('execucoes_os').eq('os_id', os.id).maybeSingle();
-    setExecucao(data);
+    const { data: execData } = await fromEmpresa('execucoes_os').eq('os_id', os.id).maybeSingle();
+    setExecucao(execData);
+
+    if (execData?.id) {
+      const { data: materiaisData } = await fromEmpresa('materiais_utilizados').eq('execucao_id', execData.id);
+      setMateriaisOS(materiaisData || []);
+    } else {
+      setMateriaisOS([]);
+    }
+
+    const { data: timelineData } = await fromEmpresa('historico_os').eq('os_id', os.id).order('created_at', { ascending: true });
+    setTimelineOS(timelineData || []);
+  };
+
+  const handlePrintOS = () => {
+    window.print();
   };
 
   const handleExportCSV = () => {
@@ -178,6 +208,20 @@ export default function HistoricoOS() {
                   <ResponsiveContainer width="100%" height={250}><BarChart data={stats.byStatus}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" tick={{fontSize: 10}} /><YAxis /><Tooltip /><Bar dataKey="value" fill="hsl(var(--primary))" radius={[4,4,0,0]} /></BarChart></ResponsiveContainer>
                 </CardContent></Card>
               </div>
+              <Card className="card-industrial"><CardHeader><CardTitle className="text-sm">Falhas por Equipamento (Top 5)</CardTitle></CardHeader><CardContent>
+                {stats.falhasEquipamento.length > 0 ? (
+                  <div className="space-y-2 text-sm">
+                    {stats.falhasEquipamento.map((item) => (
+                      <div key={item.equipamento} className="flex items-center justify-between border-b border-border pb-2">
+                        <span className="truncate pr-4">{item.equipamento}</span>
+                        <Badge variant="secondary">{item.total}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sem falhas registradas no período filtrado.</p>
+                )}
+              </CardContent></Card>
             </>
           ) : <p className="text-center text-muted-foreground py-12">Sem dados para exibir estatísticas</p>}
         </TabsContent>
@@ -192,18 +236,39 @@ export default function HistoricoOS() {
                 <DialogTitle className="flex items-center gap-2">
                   <span className="font-mono text-xl">O.S {selectedOS.numero_os}</span>
                   {statusBadge(selectedOS.status)}
+                  <Button variant="outline" size="sm" onClick={handlePrintOS} className="gap-2 ml-auto no-print"><Printer className="h-4 w-4" />Imprimir</Button>
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
+              <div className="space-y-4 print-container">
+                <div className="hidden print:block border-b pb-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-lg">{empresa?.nome_sistema || 'PCM ESTRATÉGICO'}</p>
+                      <p className="text-xs text-muted-foreground">Ordem de Serviço Técnica</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-mono">O.S #{selectedOS.numero_os}</p>
+                      <p className="text-xs">{new Date().toLocaleDateString('pt-BR')}</p>
+                    </div>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg text-sm">
                   <div><Label className="text-xs text-muted-foreground">TAG</Label><p className="font-mono text-primary font-medium">{selectedOS.tag}</p></div>
                   <div><Label className="text-xs text-muted-foreground">Equipamento</Label><p>{selectedOS.equipamento}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Área</Label><p>{selectedOS.area || '-'}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Linha/Componente</Label><p>{selectedOS.componente || '-'}</p></div>
                   <div><Label className="text-xs text-muted-foreground">Tipo</Label><p><Badge variant="outline">{selectedOS.tipo}</Badge></p></div>
                   <div><Label className="text-xs text-muted-foreground">Prioridade</Label><p>{selectedOS.prioridade}</p></div>
                   <div><Label className="text-xs text-muted-foreground">Solicitante</Label><p>{selectedOS.solicitante}</p></div>
                   <div><Label className="text-xs text-muted-foreground">Data</Label><p>{new Date(selectedOS.data_solicitacao).toLocaleDateString('pt-BR')}</p></div>
                 </div>
                 <div><Label className="text-xs text-muted-foreground">Problema</Label><p className="mt-1 p-3 bg-muted/50 rounded-lg text-sm">{selectedOS.problema}</p></div>
+                <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg text-sm">
+                  <div><Label className="text-xs text-muted-foreground">Responsável Planejamento</Label><p>{selectedOS.responsavel_planejamento || '-'}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Equipe Planejamento</Label><p>{selectedOS.equipe_planejamento || '-'}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Data Programada</Label><p>{selectedOS.data_programada ? new Date(selectedOS.data_programada).toLocaleDateString('pt-BR') : '-'}</p></div>
+                  <div><Label className="text-xs text-muted-foreground">Duração Estimada</Label><p>{selectedOS.duracao_estimada ? `${selectedOS.duracao_estimada} min` : '-'}</p></div>
+                </div>
 
                 {selectedOS.status === 'FECHADA' && (selectedOS.modo_falha || selectedOS.causa_raiz) && (
                   <div className="border-t pt-4">
@@ -222,11 +287,56 @@ export default function HistoricoOS() {
                     <h4 className="font-semibold mb-3 text-sm">Dados da Execução</h4>
                     <div className="grid grid-cols-2 gap-4 p-3 bg-success/5 rounded-lg text-sm">
                       <div><Label className="text-xs text-muted-foreground">Mecânico</Label><p>{execucao.mecanico_nome}</p></div>
-                      <div><Label className="text-xs text-muted-foreground">Tempo</Label><p className="font-mono">{execucao.hora_inicio} - {execucao.hora_fim} ({execucao.tempo_execucao}min)</p></div>
+                      <div><Label className="text-xs text-muted-foreground">Tempo</Label><p className="font-mono">{execucao.data_inicio || ''} {execucao.hora_inicio} - {execucao.data_fim || ''} {execucao.hora_fim} ({execucao.tempo_execucao}min)</p></div>
                       <div><Label className="text-xs text-muted-foreground">Data Fechamento</Label><p>{selectedOS.data_fechamento ? new Date(selectedOS.data_fechamento).toLocaleDateString('pt-BR') : '-'}</p></div>
                       <div><Label className="text-xs text-muted-foreground">Custo Total</Label><p className="font-mono font-medium text-success">R$ {Number(execucao.custo_total || 0).toFixed(2)}</p></div>
+                      <div><Label className="text-xs text-muted-foreground">Tempo Atendimento</Label><p>{execucao.tempo_atendimento ? `${execucao.tempo_atendimento} min` : '-'}</p></div>
+                      <div><Label className="text-xs text-muted-foreground">Tempo Máquina Parada</Label><p>{execucao.tempo_maquina_parada ? `${execucao.tempo_maquina_parada} min` : '-'}</p></div>
                     </div>
                     {execucao.servico_executado && <div className="mt-3"><Label className="text-xs text-muted-foreground">Serviço Executado</Label><p className="mt-1 p-3 bg-muted/50 rounded-lg text-sm">{execucao.servico_executado}</p></div>}
+
+                    {materiaisOS.length > 0 && (
+                      <div className="mt-3">
+                        <Label className="text-xs text-muted-foreground">Peças Utilizadas</Label>
+                        <div className="mt-1 border rounded-lg overflow-hidden">
+                          <table className="table-industrial w-full">
+                            <thead><tr><th>Código</th><th>Descrição</th><th>Quantidade</th></tr></thead>
+                            <tbody>
+                              {materiaisOS.map((material) => (
+                                <tr key={material.id}>
+                                  <td>{material.material_id || '-'}</td>
+                                  <td>{material.material_nome}</td>
+                                  <td>{material.quantidade}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {timelineOS.length > 0 && (
+                      <div className="mt-3">
+                        <Label className="text-xs text-muted-foreground">Timeline da Manutenção</Label>
+                        <div className="mt-1 space-y-2">
+                          {timelineOS.map((evento) => (
+                            <div key={evento.id} className="text-xs p-2 border rounded-md">
+                              <div className="flex items-center justify-between">
+                                <strong>{evento.evento}</strong>
+                                <span>{new Date(evento.created_at).toLocaleString('pt-BR')}</span>
+                              </div>
+                              <p className="text-muted-foreground">{evento.detalhes || '-'}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-3 gap-4 border-t pt-4 mt-4 text-sm">
+                      <div><Label className="text-xs text-muted-foreground">Executor</Label><p>{execucao.tecnico_responsavel || execucao.mecanico_nome || '-'}</p></div>
+                      <div><Label className="text-xs text-muted-foreground">Supervisor</Label><p>{selectedOS.encerrado_por || selectedOS.usuario_fechamento || '-'}</p></div>
+                      <div><Label className="text-xs text-muted-foreground">Data</Label><p>{selectedOS.data_fechamento ? new Date(selectedOS.data_fechamento).toLocaleDateString('pt-BR') : '-'}</p></div>
+                    </div>
                   </div>
                 )}
               </div>

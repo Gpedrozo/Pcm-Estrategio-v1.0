@@ -61,6 +61,15 @@ export type Database = {
           acao_corretiva?: string | null
           causa_raiz_identificada?: string | null
           created_at?: string
+                    data_fim: string | null
+                    data_inicio: string | null
+                    equipe: string | null
+                    fotos: Json | null
+                    observacoes: string | null
+                    tecnico_responsavel: string | null
+                    tempo_atendimento: number | null
+                    tempo_maquina_parada: number | null
+                    tempo_reparo: number | null
           data_falha?: string
           descricao_falha?: string
           empresa_id?: string | null
@@ -78,6 +87,15 @@ export type Database = {
           tag?: string
           updated_at?: string
         }
+                    data_fim?: string | null
+                    data_inicio?: string | null
+                    equipe?: string | null
+                    fotos?: Json | null
+                    observacoes?: string | null
+                    tecnico_responsavel?: string | null
+                    tempo_atendimento?: number | null
+                    tempo_maquina_parada?: number | null
+                    tempo_reparo?: number | null
         Relationships: [
           {
             foreignKeyName: "analise_causa_raiz_empresa_id_fkey"
@@ -95,6 +113,15 @@ export type Database = {
           empresa_id: string | null
           equipamento_id: string
           id: string
+                    data_fim?: string | null
+                    data_inicio?: string | null
+                    equipe?: string | null
+                    fotos?: Json | null
+                    observacoes?: string | null
+                    tecnico_responsavel?: string | null
+                    tempo_atendimento?: number | null
+                    tempo_maquina_parada?: number | null
+                    tempo_reparo?: number | null
           nome_arquivo: string
           nome_original: string
           storage_path: string
@@ -529,15 +556,24 @@ export type Database = {
           custo_terceiros: number | null
           custo_total: number | null
           data_execucao: string
+          data_fim: string | null
+          data_inicio: string | null
           empresa_id: string | null
+          equipe: string | null
+          fotos: Json | null
           hora_fim: string | null
           hora_inicio: string | null
           id: string
           mecanico_id: string | null
           mecanico_nome: string
+          observacoes: string | null
           os_id: string
           servico_executado: string | null
+          tecnico_responsavel: string | null
+          tempo_atendimento: number | null
           tempo_execucao: number | null
+          tempo_maquina_parada: number | null
+          tempo_reparo: number | null
         }
         Insert: {
           created_at?: string
@@ -546,15 +582,24 @@ export type Database = {
           custo_terceiros?: number | null
           custo_total?: number | null
           data_execucao?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           empresa_id?: string | null
+          equipe?: string | null
+          fotos?: Json | null
           hora_fim?: string | null
           hora_inicio?: string | null
           id?: string
           mecanico_id?: string | null
           mecanico_nome: string
+          observacoes?: string | null
           os_id: string
           servico_executado?: string | null
+          tecnico_responsavel?: string | null
+          tempo_atendimento?: number | null
           tempo_execucao?: number | null
+          tempo_maquina_parada?: number | null
+          tempo_reparo?: number | null
         }
         Update: {
           created_at?: string
@@ -563,15 +608,24 @@ export type Database = {
           custo_terceiros?: number | null
           custo_total?: number | null
           data_execucao?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           empresa_id?: string | null
+          equipe?: string | null
+          fotos?: Json | null
           hora_fim?: string | null
           hora_inicio?: string | null
           id?: string
           mecanico_id?: string | null
           mecanico_nome?: string
+          observacoes?: string | null
           os_id?: string
           servico_executado?: string | null
+          tecnico_responsavel?: string | null
+          tempo_atendimento?: number | null
           tempo_execucao?: number | null
+          tempo_maquina_parada?: number | null
+          tempo_reparo?: number | null
         }
         Relationships: [
           {
@@ -661,6 +715,60 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historico_os: {
+        Row: {
+          created_at: string
+          detalhes: string | null
+          empresa_id: string | null
+          evento: string
+          id: string
+          metadata: Json | null
+          os_id: string
+          status_anterior: string | null
+          status_novo: string | null
+          usuario: string | null
+        }
+        Insert: {
+          created_at?: string
+          detalhes?: string | null
+          empresa_id?: string | null
+          evento: string
+          id?: string
+          metadata?: Json | null
+          os_id: string
+          status_anterior?: string | null
+          status_novo?: string | null
+          usuario?: string | null
+        }
+        Update: {
+          created_at?: string
+          detalhes?: string | null
+          empresa_id?: string | null
+          evento?: string
+          id?: string
+          metadata?: Json | null
+          os_id?: string
+          status_anterior?: string | null
+          status_novo?: string | null
+          usuario?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_os_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historico_os_os_id_fkey"
+            columns: ["os_id"]
+            isOneToOne: false
+            referencedRelation: "ordens_servico"
             referencedColumns: ["id"]
           },
         ]
@@ -1165,19 +1273,34 @@ export type Database = {
         Row: {
           acao_corretiva: string | null
           causa_raiz: string | null
+          causa_falha_classificacao:
+            | Database["public"]["Enums"]["classificacao_falha"]
+            | null
           created_at: string
           custo_estimado: number | null
           data_fechamento: string | null
+          data_programada: string | null
           data_solicitacao: string
+          duracao_estimada: number | null
+          encerrado_em: string | null
+          encerrado_por: string | null
           empresa_id: string | null
           equipamento: string
+          equipe_planejamento: string | null
+          funcionamento_validado: boolean | null
+          ferramentas_necessarias: string | null
           id: string
           licoes_aprendidas: string | null
           modo_falha: string | null
           numero_os: number
+          origem_solicitacao_id: string | null
+          parada_programada: boolean
+          pecas_necessarias: string | null
           plano_preventivo_id: string | null
           prioridade: Database["public"]["Enums"]["prioridade_os"]
           problema: string
+          responsavel_planejamento: string | null
+          servico_confirmado: boolean | null
           solicitante: string
           status: Database["public"]["Enums"]["status_os"]
           tag: string
@@ -1191,19 +1314,34 @@ export type Database = {
         Insert: {
           acao_corretiva?: string | null
           causa_raiz?: string | null
+          causa_falha_classificacao?:
+            | Database["public"]["Enums"]["classificacao_falha"]
+            | null
           created_at?: string
           custo_estimado?: number | null
           data_fechamento?: string | null
+          data_programada?: string | null
           data_solicitacao?: string
+          duracao_estimada?: number | null
+          encerrado_em?: string | null
+          encerrado_por?: string | null
           empresa_id?: string | null
           equipamento: string
+          equipe_planejamento?: string | null
+          funcionamento_validado?: boolean | null
+          ferramentas_necessarias?: string | null
           id?: string
           licoes_aprendidas?: string | null
           modo_falha?: string | null
           numero_os?: number
+          origem_solicitacao_id?: string | null
+          parada_programada?: boolean
+          pecas_necessarias?: string | null
           plano_preventivo_id?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_os"]
           problema: string
+          responsavel_planejamento?: string | null
+          servico_confirmado?: boolean | null
           solicitante: string
           status?: Database["public"]["Enums"]["status_os"]
           tag: string
@@ -1217,19 +1355,34 @@ export type Database = {
         Update: {
           acao_corretiva?: string | null
           causa_raiz?: string | null
+          causa_falha_classificacao?:
+            | Database["public"]["Enums"]["classificacao_falha"]
+            | null
           created_at?: string
           custo_estimado?: number | null
           data_fechamento?: string | null
+          data_programada?: string | null
           data_solicitacao?: string
+          duracao_estimada?: number | null
+          encerrado_em?: string | null
+          encerrado_por?: string | null
           empresa_id?: string | null
           equipamento?: string
+          equipe_planejamento?: string | null
+          funcionamento_validado?: boolean | null
+          ferramentas_necessarias?: string | null
           id?: string
           licoes_aprendidas?: string | null
           modo_falha?: string | null
           numero_os?: number
+          origem_solicitacao_id?: string | null
+          parada_programada?: boolean
+          pecas_necessarias?: string | null
           plano_preventivo_id?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_os"]
           problema?: string
+          responsavel_planejamento?: string | null
+          servico_confirmado?: boolean | null
           solicitante?: string
           status?: Database["public"]["Enums"]["status_os"]
           tag?: string
@@ -1246,6 +1399,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ordens_servico_origem_solicitacao_id_fkey"
+            columns: ["origem_solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "solicitacoes"
             referencedColumns: ["id"]
           },
         ]
@@ -1597,44 +1757,74 @@ export type Database = {
       }
       solicitacoes: {
         Row: {
+          analisado_por: string | null
+          anexos: Json | null
+          area: string | null
           created_at: string
+          data_analise: string | null
+          data_solicitacao: string
           descricao: string
           empresa_id: string | null
           equipamento: string
           id: string
+          impacto_producao: string | null
+          motivo_rejeicao: string | null
           os_gerada_id: string | null
           prioridade: Database["public"]["Enums"]["prioridade_os"]
+          prioridade_triagem: Database["public"]["Enums"]["prioridade_os"] | null
           solicitante: string
           status: string
           tag: string
+          tipo_manutencao: Database["public"]["Enums"]["tipo_os"] | null
+          triagem_observacoes: string | null
           updated_at: string
           usuario_id: string | null
         }
         Insert: {
+          analisado_por?: string | null
+          anexos?: Json | null
+          area?: string | null
           created_at?: string
+          data_analise?: string | null
+          data_solicitacao?: string
           descricao: string
           empresa_id?: string | null
           equipamento: string
           id?: string
+          impacto_producao?: string | null
+          motivo_rejeicao?: string | null
           os_gerada_id?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_os"]
+          prioridade_triagem?: Database["public"]["Enums"]["prioridade_os"] | null
           solicitante: string
           status?: string
           tag: string
+          tipo_manutencao?: Database["public"]["Enums"]["tipo_os"] | null
+          triagem_observacoes?: string | null
           updated_at?: string
           usuario_id?: string | null
         }
         Update: {
+          analisado_por?: string | null
+          anexos?: Json | null
+          area?: string | null
           created_at?: string
+          data_analise?: string | null
+          data_solicitacao?: string
           descricao?: string
           empresa_id?: string | null
           equipamento?: string
           id?: string
+          impacto_producao?: string | null
+          motivo_rejeicao?: string | null
           os_gerada_id?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_os"]
+          prioridade_triagem?: Database["public"]["Enums"]["prioridade_os"] | null
           solicitante?: string
           status?: string
           tag?: string
+          tipo_manutencao?: Database["public"]["Enums"]["tipo_os"] | null
+          triagem_observacoes?: string | null
           updated_at?: string
           usuario_id?: string | null
         }
@@ -1762,6 +1952,14 @@ export type Database = {
     }
     Enums: {
       app_role: "ADMIN" | "USUARIO" | "SOLICITANTE" | "MASTER_TI"
+      classificacao_falha:
+        | "MECANICA"
+        | "ELETRICA"
+        | "AUTOMACAO"
+        | "OPERACIONAL"
+        | "LUBRIFICACAO"
+        | "DESGASTE"
+        | "OUTRO"
       criticidade_abc: "A" | "B" | "C"
       nivel_risco: "CRITICO" | "ALTO" | "MEDIO" | "BAIXO"
       periodicidade_plano:
@@ -1915,6 +2113,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["ADMIN", "USUARIO", "SOLICITANTE", "MASTER_TI"],
+      classificacao_falha: [
+        "MECANICA",
+        "ELETRICA",
+        "AUTOMACAO",
+        "OPERACIONAL",
+        "LUBRIFICACAO",
+        "DESGASTE",
+        "OUTRO",
+      ],
       criticidade_abc: ["A", "B", "C"],
       nivel_risco: ["CRITICO", "ALTO", "MEDIO", "BAIXO"],
       periodicidade_plano: [

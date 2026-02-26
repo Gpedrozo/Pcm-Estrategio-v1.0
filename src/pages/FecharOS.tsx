@@ -26,6 +26,7 @@ const CAUSAS_RAIZ_6M = [
   { value: 'MEIO_AMBIENTE', label: 'Meio Ambiente' },
   { value: 'MEDICAO', label: 'Medição' },
 ];
+const CLASSIFICACAO_FALHA = ['MECANICA', 'ELETRICA', 'AUTOMACAO', 'OPERACIONAL', 'LUBRIFICACAO', 'DESGASTE', 'OUTRO'];
 
 interface MaterialUsado { id: string; nome: string; codigo: string; custo_unitario: number; quantidade: number; }
 
@@ -42,10 +43,10 @@ export default function FecharOS() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [execForm, setExecForm] = useState({
-    mecanicoId: '', horaInicio: '', horaFim: '', servicoExecutado: '', custoTerceiros: '',
+    mecanicoId: '', dataInicio: '', horaInicio: '', dataFim: '', horaFim: '', tecnicoResponsavel: '', equipe: '', servicoExecutado: '', observacoes: '', fotos: '', custoTerceiros: '', tempoParada: '',
   });
   const [rcaForm, setRcaForm] = useState({
-    modoFalha: '', causaRaiz: '', acaoCorretiva: '', licoesAprendidas: '',
+    modoFalha: '', causaRaiz: '', acaoCorretiva: '', licoesAprendidas: '', classificacaoFalha: 'OUTRO', servicoConfirmado: false, funcionamentoValidado: false,
   });
   const [materiaisUsados, setMateriaisUsados] = useState<MaterialUsado[]>([]);
   const [matSel, setMatSel] = useState('');
@@ -75,6 +76,14 @@ export default function FecharOS() {
     return mins > 0 ? mins : 0;
   };
 
+  const calcTempoAtendimento = () => {
+    if (!selectedOS || !execForm.dataInicio || !execForm.horaInicio) return 0;
+    const abertura = new Date(selectedOS.data_solicitacao);
+    const inicio = new Date(`${execForm.dataInicio}T${execForm.horaInicio}:00`);
+    const diff = Math.round((inicio.getTime() - abertura.getTime()) / 60000);
+    return diff > 0 ? diff : 0;
+  };
+
   const custoMateriais = materiaisUsados.reduce((t, m) => t + m.quantidade * m.custo_unitario, 0);
 
   const handleAddMaterial = () => {
@@ -97,8 +106,9 @@ export default function FecharOS() {
   const handleSelectOS = (os: any) => {
     setSelectedOS(os);
     setActiveTab('execucao');
-    setExecForm({ mecanicoId: '', horaInicio: '', horaFim: '', servicoExecutado: '', custoTerceiros: '' });
-    setRcaForm({ modoFalha: '', causaRaiz: '', acaoCorretiva: '', licoesAprendidas: '' });
+    const hoje = new Date().toISOString().split('T')[0];
+    setExecForm({ mecanicoId: '', dataInicio: hoje, horaInicio: '', dataFim: hoje, horaFim: '', tecnicoResponsavel: '', equipe: '', servicoExecutado: '', observacoes: '', fotos: '', custoTerceiros: '', tempoParada: '' });
+    setRcaForm({ modoFalha: '', causaRaiz: '', acaoCorretiva: '', licoesAprendidas: '', classificacaoFalha: 'OUTRO', servicoConfirmado: false, funcionamentoValidado: false });
     setMateriaisUsados([]);
   };
 
@@ -118,9 +128,24 @@ export default function FecharOS() {
         .from('execucoes_os')
         .insert({
         os_id: selectedOS.id, mecanico_id: execForm.mecanicoId, mecanico_nome: selectedMecanico.nome,
-        hora_inicio: execForm.horaInicio, hora_fim: execForm.horaFim, tempo_execucao: tempoExec,
-        servico_executado: execForm.servicoExecutado, custo_mao_obra: custoMO, custo_materiais: custoMateriais,
-        custo_terceiros: custoTerc, custo_total: custoTotal, empresa_id: empresaId,
+        data_inicio: execForm.dataInicio || null,
+        data_fim: execForm.dataFim || null,
+        hora_inicio: execForm.horaInicio,
+        hora_fim: execForm.horaFim,
+        tecnico_responsavel: execForm.tecnicoResponsavel || selectedMecanico.nome,
+        equipe: execForm.equipe || null,
+        tempo_execucao: tempoExec,
+        tempo_reparo: tempoExec,
+        tempo_atendimento: calcTempoAtendimento(),
+        tempo_maquina_parada: execForm.tempoParada ? parseInt(execForm.tempoParada) : 0,
+        fotos: execForm.fotos ? execForm.fotos.split('\n').map((item) => item.trim()).filter(Boolean) : [],
+        observacoes: execForm.observacoes || null,
+        servico_executado: execForm.servicoExecutado,
+        custo_mao_obra: custoMO,
+        custo_materiais: custoMateriais,
+        custo_terceiros: custoTerc,
+        custo_total: custoTotal,
+        empresa_id: empresaId,
       })
         .select('id')
         .single();
@@ -142,6 +167,11 @@ export default function FecharOS() {
       // Update OS
       let updateQuery = supabase.from('ordens_servico').update({
         status: 'FECHADA', data_fechamento: new Date().toISOString(), usuario_fechamento: user?.nome,
+        encerrado_por: user?.nome,
+        encerrado_em: new Date().toISOString(),
+        servico_confirmado: rcaForm.servicoConfirmado,
+        funcionamento_validado: rcaForm.funcionamentoValidado,
+        causa_falha_classificacao: rcaForm.classificacaoFalha,
         modo_falha: isCorretiva ? rcaForm.modoFalha || null : null,
         causa_raiz: isCorretiva ? rcaForm.causaRaiz || null : null,
         acao_corretiva: isCorretiva ? rcaForm.acaoCorretiva || null : null,
@@ -219,8 +249,12 @@ export default function FecharOS() {
                         <SelectContent>{mecanicos.map(m => <SelectItem key={m.id} value={m.id}>{m.nome} ({m.tipo === 'PROPRIO' ? 'Próprio' : 'Terc.'})</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2"><Label>Data Início *</Label><Input type="date" value={execForm.dataInicio} onChange={e => setExecForm(p => ({...p, dataInicio: e.target.value}))} required /></div>
                     <div className="space-y-2"><Label>Hora Início *</Label><Input type="time" value={execForm.horaInicio} onChange={e => setExecForm(p => ({...p, horaInicio: e.target.value}))} required /></div>
+                    <div className="space-y-2"><Label>Data Fim *</Label><Input type="date" value={execForm.dataFim} onChange={e => setExecForm(p => ({...p, dataFim: e.target.value}))} required /></div>
                     <div className="space-y-2"><Label>Hora Fim *</Label><Input type="time" value={execForm.horaFim} onChange={e => setExecForm(p => ({...p, horaFim: e.target.value}))} required /></div>
+                    <div className="space-y-2"><Label>Técnico Responsável *</Label><Input value={execForm.tecnicoResponsavel} onChange={e => setExecForm(p => ({...p, tecnicoResponsavel: e.target.value}))} required /></div>
+                    <div className="space-y-2"><Label>Equipe</Label><Input value={execForm.equipe} onChange={e => setExecForm(p => ({...p, equipe: e.target.value}))} placeholder="Ex.: Mecânica turno A" /></div>
                   </div>
                   {calcDuration() > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -228,7 +262,13 @@ export default function FecharOS() {
                       {selectedMecanico?.custo_hora && <div className="p-3 bg-info/10 rounded-lg text-sm">Custo MO: <strong className="text-info">{formatCurrency((calcDuration()/60) * Number(selectedMecanico.custo_hora))}</strong></div>}
                     </div>
                   )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Tempo Máquina Parada (min)</Label><Input type="number" value={execForm.tempoParada} onChange={e => setExecForm(p => ({...p, tempoParada: e.target.value}))} /></div>
+                    <div className="space-y-2"><Label>Tempo Atendimento (min)</Label><Input value={String(calcTempoAtendimento())} readOnly className="bg-muted" /></div>
+                  </div>
                   <div className="space-y-2"><Label>Serviço Executado *</Label><Textarea value={execForm.servicoExecutado} onChange={e => setExecForm(p => ({...p, servicoExecutado: e.target.value}))} rows={3} required /></div>
+                  <div className="space-y-2"><Label>Observações</Label><Textarea value={execForm.observacoes} onChange={e => setExecForm(p => ({...p, observacoes: e.target.value}))} rows={2} /></div>
+                  <div className="space-y-2"><Label>Fotos (URLs, uma por linha)</Label><Textarea value={execForm.fotos} onChange={e => setExecForm(p => ({...p, fotos: e.target.value}))} rows={2} /></div>
                   <div className="space-y-2"><Label>Custo Terceiros (R$)</Label><Input type="number" step="0.01" value={execForm.custoTerceiros} onChange={e => setExecForm(p => ({...p, custoTerceiros: e.target.value}))} /></div>
                 </TabsContent>
 
@@ -267,6 +307,12 @@ export default function FecharOS() {
                       <ClipboardCheck className="h-4 w-4" /> OS Corretiva — preenchimento de RCA recomendado.
                     </div>
                   )}
+                  <div className="space-y-2"><Label>Classificação da Falha</Label>
+                    <Select value={rcaForm.classificacaoFalha} onValueChange={v => setRcaForm(p => ({...p, classificacaoFalha: v}))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>{CLASSIFICACAO_FALHA.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, ' ')}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2"><Label>Modo de Falha</Label>
                     <Select value={rcaForm.modoFalha} onValueChange={v => setRcaForm(p => ({...p, modoFalha: v}))}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
@@ -281,11 +327,15 @@ export default function FecharOS() {
                   </div>
                   <div className="space-y-2"><Label>Ação Corretiva</Label><Textarea value={rcaForm.acaoCorretiva} onChange={e => setRcaForm(p => ({...p, acaoCorretiva: e.target.value}))} rows={3} /></div>
                   <div className="space-y-2"><Label>Lições Aprendidas</Label><Textarea value={rcaForm.licoesAprendidas} onChange={e => setRcaForm(p => ({...p, licoesAprendidas: e.target.value}))} rows={3} /></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={rcaForm.servicoConfirmado} onChange={e => setRcaForm(p => ({...p, servicoConfirmado: e.target.checked}))} />Confirmar serviço executado</label>
+                    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={rcaForm.funcionamentoValidado} onChange={e => setRcaForm(p => ({...p, funcionamentoValidado: e.target.checked}))} />Validar funcionamento do equipamento</label>
+                  </div>
                 </TabsContent>
               </Tabs>
 
               <div className="flex gap-3 pt-4 border-t">
-                <Button type="submit" className="flex-1 btn-industrial gap-2" disabled={isSubmitting || !execForm.mecanicoId || !execForm.horaInicio || !execForm.horaFim}>
+                <Button type="submit" className="flex-1 btn-industrial gap-2" disabled={isSubmitting || !execForm.mecanicoId || !execForm.dataInicio || !execForm.horaInicio || !execForm.dataFim || !execForm.horaFim || !execForm.tecnicoResponsavel || !rcaForm.servicoConfirmado || !rcaForm.funcionamentoValidado}>
                   {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileCheck className="h-4 w-4" />}
                   Fechar O.S
                 </Button>

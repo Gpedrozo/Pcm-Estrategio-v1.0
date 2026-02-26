@@ -27,6 +27,11 @@ export function useIndicadores() {
         ? Math.round(execucoes.reduce((acc, ex) => acc + (ex.tempo_execucao || 0), 0) / execucoes.length)
         : 0;
 
+      const execucoesComAtendimento = execucoes.filter((ex) => (ex.tempo_atendimento || 0) > 0);
+      const tempoMedioAtendimento = execucoesComAtendimento.length > 0
+        ? Math.round(execucoesComAtendimento.reduce((acc, ex) => acc + (ex.tempo_atendimento || 0), 0) / execucoesComAtendimento.length)
+        : 0;
+
       const backlogOrdens = ordens.filter(os => os.status !== 'FECHADA');
       const backlogQuantidade = backlogOrdens.length;
       const backlogTempo = backlogOrdens.reduce((acc, os) => acc + (os.tempo_estimado || 0), 0) / 60;
@@ -54,6 +59,7 @@ export function useIndicadores() {
         osEmAndamento,
         osFechadas,
         tempoMedioExecucao,
+        tempoMedioAtendimento,
         mtbf,
         mttr: Math.round(mttr * 10) / 10,
         disponibilidade: Math.round(disponibilidade * 10) / 10,
