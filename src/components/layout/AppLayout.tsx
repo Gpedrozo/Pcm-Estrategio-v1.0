@@ -4,6 +4,7 @@ import { AppSidebar } from './AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmpresa } from '@/contexts/EmpresaContext';
 import { getRouteModule } from '@/config/routeModules';
+import { MODULES } from '@/constants/modules';
 import { Menu, Loader2 } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -18,23 +19,47 @@ export function AppLayout() {
   const routeModule = useMemo(() => getRouteModule(location.pathname), [location.pathname]);
   const allowed = useMemo(() => {
     if (!routeModule) return false;
+    if (routeModule === MODULES.DASHBOARD) return true;
     return moduloAtivo(routeModule);
   }, [moduloAtivo, routeModule]);
 
   // Route protection based on module
   useEffect(() => {
     if (isLoading || empresaLoading) return;
-    if (!allowed) {
-      toast({
-        title: routeModule ? 'Módulo não disponível' : 'Rota não permitida',
-        description: routeModule
-          ? 'Este módulo não está incluído no seu plano atual.'
-          : 'Esta rota não está mapeada para acesso no sistema.',
-        variant: 'destructive',
-      });
-      navigate('/dashboard', { replace: true });
+    if (!isAuthenticated) return;
+
+    if (!routeModule) {
+      if (location.pathname !== '/dashboard') {
+        toast({
+          title: 'Rota não permitida',
+          description: 'Esta rota não está mapeada para acesso no sistema.',
+          variant: 'destructive',
+        });
+        navigate('/dashboard', { replace: true });
+      }
+      return;
     }
-  }, [allowed, routeModule, isLoading, empresaLoading, navigate, toast]);
+
+    if (!allowed) {
+      if (location.pathname !== '/dashboard') {
+        toast({
+          title: 'Módulo não disponível',
+          description: 'Este módulo não está incluído no seu plano atual.',
+          variant: 'destructive',
+        });
+        navigate('/dashboard', { replace: true });
+      }
+    }
+  }, [
+    allowed,
+    routeModule,
+    isAuthenticated,
+    isLoading,
+    empresaLoading,
+    location.pathname,
+    navigate,
+    toast,
+  ]);
 
   if (isLoading) {
     return (

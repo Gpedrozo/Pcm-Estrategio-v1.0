@@ -47,5 +47,11 @@ export const routeModules: Record<string, ModuleName> = {
 };
 
 export function getRouteModule(pathname: string): ModuleName | null {
-  return routeModules[pathname] ?? null;
+  const normalizedPath = pathname.toLowerCase().replace(/\/+$/, '') || '/';
+
+  if (normalizedPath.startsWith('/admin/')) {
+    return MODULES.ADMIN;
+  }
+
+  return routeModules[normalizedPath] ?? null;
 }
