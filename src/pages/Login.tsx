@@ -120,7 +120,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          © 2025 PCM ESTRATÉGICO • v3.0
+          © 2025 PCM ESTRATÉGICO • V1.0
         </p>
       </div>
     </div>
