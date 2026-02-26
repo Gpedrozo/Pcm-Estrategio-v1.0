@@ -41,6 +41,7 @@ import NotFound from "./pages/NotFound";
 import SiteHome from "./pages/SiteHome";
 import SystemPortal from "./pages/SystemPortal";
 import SystemsCatalog from "./pages/SystemsCatalog";
+import { PLATFORM_ROUTES } from "@/config/platformArchitecture";
 
 // Admin Portal
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -63,11 +64,11 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<SiteHome />} />
-            <Route path="/acessar" element={<SystemPortal />} />
-            <Route path="/sistemas" element={<SystemsCatalog />} />
-            <Route path="/portal" element={<Navigate to="/acessar" replace />} />
-            <Route path="/acessar-sistema" element={<Navigate to="/acessar" replace />} />
+            <Route path={PLATFORM_ROUTES.siteHome} element={<SiteHome />} />
+            <Route path={PLATFORM_ROUTES.portalAcesso} element={<SystemPortal />} />
+            <Route path={PLATFORM_ROUTES.catalogoSistemas} element={<SystemsCatalog />} />
+            <Route path="/portal" element={<Navigate to={PLATFORM_ROUTES.portalAcesso} replace />} />
+            <Route path="/acessar-sistema" element={<Navigate to={PLATFORM_ROUTES.portalAcesso} replace />} />
             <Route path="/start" element={<Index />} />
             <Route path="/login" element={<Login />} />
 
@@ -99,10 +100,10 @@ const App = () => (
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/auditoria" element={<Auditoria />} />
               <Route path="/analise-ia" element={<AnaliseIA />} />
-              <Route path="/master-ti" element={<Navigate to="/admin" replace />} />
+              <Route path="/master-ti" element={<Navigate to={PLATFORM_ROUTES.adminGlobal} replace />} />
             </Route>
 
-            <Route path="/gestao" element={<Navigate to="/admin" replace />} />
+            <Route path={PLATFORM_ROUTES.adminAlias} element={<Navigate to={PLATFORM_ROUTES.adminGlobal} replace />} />
             <Route path="/gestao/empresas" element={<Navigate to="/admin/empresas" replace />} />
             <Route path="/gestao/usuarios" element={<Navigate to="/admin/usuarios" replace />} />
             <Route path="/gestao/planos" element={<Navigate to="/admin/planos" replace />} />

@@ -152,3 +152,24 @@ Gustavo Pedrozo Pinto
 GPPIS – Gustavo Pedrozo Pinto Industrial Systems
 
 Todos os direitos reservados.
+
+---
+
+## Diretriz Obrigatória de Arquitetura SaaS
+
+Este projeto deve sempre manter arquitetura SaaS multiempresa com três camadas:
+
+1. Site institucional (porta de entrada da plataforma)
+2. Painel administrativo global (administração da plataforma)
+3. Sistemas operacionais (execução por empresa)
+
+Regras obrigatórias:
+
+- manter isolamento de dados por empresa
+- não mover administração global para dentro dos sistemas
+- não misturar dados entre empresas
+- preservar o fluxo Site → Admin Global → Empresas → Usuários → Sistemas
+
+Documentação oficial da diretriz:
+
+- docs/arquitetura-saas.md
