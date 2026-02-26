@@ -18,6 +18,7 @@ export function AppLayout() {
   const { toast } = useToast();
   const routeModule = useMemo(() => getRouteModule(location.pathname), [location.pathname]);
   const allowedSolicitantePaths = useMemo(() => ['/dashboard', '/solicitacoes'], []);
+  const blockedUsuarioPaths = useMemo(() => ['/os/nova'], []);
   const lastBlockedPathRef = useRef<string | null>(null);
   const allowed = useMemo(() => {
     if (!routeModule) return false;
@@ -58,6 +59,19 @@ export function AppLayout() {
       return;
     }
 
+    if (user?.tipo === 'USUARIO' && blockedUsuarioPaths.includes(location.pathname)) {
+      if (lastBlockedPathRef.current !== location.pathname) {
+        lastBlockedPathRef.current = location.pathname;
+        toast({
+          title: 'Acesso restrito',
+          description: 'Perfil USUARIO pode aceitar solicitações, mas não emitir O.S.',
+          variant: 'destructive',
+        });
+      }
+      navigate('/solicitacoes', { replace: true });
+      return;
+    }
+
     if (!allowed) {
       if (location.pathname !== '/dashboard') {
         if (lastBlockedPathRef.current !== location.pathname) {
@@ -78,6 +92,7 @@ export function AppLayout() {
     routeModule,
     user?.tipo,
     allowedSolicitantePaths,
+    blockedUsuarioPaths,
     isAuthenticated,
     isLoading,
     empresaLoading,

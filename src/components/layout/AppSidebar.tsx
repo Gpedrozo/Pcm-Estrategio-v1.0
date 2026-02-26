@@ -92,6 +92,7 @@ export function AppSidebar() {
   const { moduloAtivo, empresa } = useEmpresa();
   const location = useLocation();
   const isSolicitanteOnly = user?.tipo === 'SOLICITANTE';
+  const isUsuarioSemEmissao = user?.tipo === 'USUARIO';
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -147,8 +148,13 @@ export function AppSidebar() {
                 <SidebarMenu>
                   {group.items
                     .filter((item) => {
-                      if (!isSolicitanteOnly) return true;
-                      return item.url === '/dashboard' || item.url === '/solicitacoes';
+                      if (isSolicitanteOnly) {
+                        return item.url === '/dashboard' || item.url === '/solicitacoes';
+                      }
+                      if (isUsuarioSemEmissao) {
+                        return item.url !== '/os/nova';
+                      }
+                      return true;
                     })
                     .map(item => renderMenuLink(item, !isModuloAtivo))}
                 </SidebarMenu>

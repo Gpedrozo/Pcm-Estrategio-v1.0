@@ -18,6 +18,8 @@ export default function Solicitacoes() {
   const { user, isAdmin } = useAuth();
   const { fromEmpresa, insertWithEmpresa, empresaId } = useEmpresaQuery();
   const navigate = useNavigate();
+  const canAprovarSolicitacao = isAdmin || user?.tipo === 'USUARIO';
+  const canEmitirOS = isAdmin;
   const [items, setItems] = useState<any[]>([]);
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -158,8 +160,8 @@ export default function Solicitacoes() {
                 {selected.os_gerada_id && <div className="space-y-1"><p className="text-xs text-muted-foreground uppercase tracking-wider">O.S Gerada</p><p className="text-sm font-mono">{selected.os_gerada_id}</p></div>}
               </div>
               <div className="flex gap-2">
-                {isAdmin && selected.status === 'PENDENTE' && <Button onClick={() => handleAprovar(selected)} className="btn-industrial gap-2"><CheckCircle2 className="h-4 w-4" />Aprovar</Button>}
-                {isAdmin && selected.status === 'APROVADA' && !selected.os_gerada_id && (
+                {canAprovarSolicitacao && selected.status === 'PENDENTE' && <Button onClick={() => handleAprovar(selected)} className="btn-industrial gap-2"><CheckCircle2 className="h-4 w-4" />Aprovar</Button>}
+                {canEmitirOS && selected.status === 'APROVADA' && !selected.os_gerada_id && (
                   <Button variant="outline" onClick={() => handleEmitirOS(selected)}>
                     Abrir O.S desta solicitação
                   </Button>

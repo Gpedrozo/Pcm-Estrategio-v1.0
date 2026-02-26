@@ -117,12 +117,12 @@ export default function NovaOS() {
     } finally { setIsLoading(false); }
   };
 
-  if (user?.tipo === 'SOLICITANTE') {
+  if (user?.tipo === 'SOLICITANTE' || user?.tipo === 'USUARIO') {
     return (
       <div className="space-y-6">
         <div className="page-header"><h1 className="page-title">Emitir Ordem de Serviço</h1><p className="page-subtitle">Acesso restrito para este perfil</p></div>
         <Card className="card-industrial max-w-2xl"><CardContent className="p-6 space-y-3">
-          <p className="text-sm text-muted-foreground">Seu perfil permite apenas criar e acompanhar solicitações de serviço.</p>
+          <p className="text-sm text-muted-foreground">Seu perfil não emite O.S. Neste fluxo, você pode aceitar e acompanhar solicitações.</p>
           <Button asChild className="btn-industrial w-fit"><Link to="/solicitacoes">Ir para Solicitações</Link></Button>
         </CardContent></Card>
       </div>
