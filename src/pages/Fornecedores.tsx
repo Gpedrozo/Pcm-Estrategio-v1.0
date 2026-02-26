@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Plus, Search, Building2, CheckCircle2, Phone, Mail, Eye, Pencil, XCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { createEntity, loadEntityList, toggleEntityAtivo, updateEntityById } from '@/services/entityCrudService';
 
 const FORM_INITIAL = { nome: '', cnpj: '', contato: '', telefone: '', email: '', endereco: '', especialidade: '' };
 
@@ -30,7 +30,7 @@ export default function Fornecedores() {
   useEffect(() => { load(); }, [fromEmpresa]);
   async function load() {
     setIsLoading(true);
-    const { data } = await fromEmpresa('fornecedores').order('nome');
+    const { data } = await loadEntityList(fromEmpresa as any, 'fornecedores', 'nome');
     setItems(data || []);
     const { data: contratos } = await fromEmpresa('contratos').select('fornecedor_id');
     if (contratos) {
@@ -43,20 +43,20 @@ export default function Fornecedores() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
-    const { error } = await insertWithEmpresa('fornecedores', form);
+    const { error } = await createEntity(insertWithEmpresa as any, 'fornecedores', form as unknown as Record<string, unknown>);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Fornecedor cadastrado!' }); setDialogOpen(false); setForm(FORM_INITIAL); setSaving(false); load();
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault(); if (!selected) return; setSaving(true);
-    const { error } = await supabase.from('fornecedores').update(form).eq('id', selected.id);
+    const { error } = await updateEntityById('fornecedores', selected.id, form as unknown as Record<string, unknown>);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Fornecedor atualizado!' }); setDetailOpen(false); setEditMode(false); setSaving(false); load();
   };
 
   const handleToggleAtivo = async (item: any) => {
-    const { error } = await supabase.from('fornecedores').update({ ativo: !item.ativo }).eq('id', item.id);
+    const { error } = await toggleEntityAtivo('fornecedores', item.id, !!item.ativo);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: item.ativo ? 'Fornecedor desativado' : 'Fornecedor ativado' }); load();
   };

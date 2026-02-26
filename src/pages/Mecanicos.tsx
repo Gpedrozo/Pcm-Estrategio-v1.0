@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Plus, Search, Users, UserCheck, UserX, DollarSign, Eye, Pencil, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { createEntity, loadEntityList, toggleEntityAtivo, updateEntityById } from '@/services/entityCrudService';
 
 const FORM_INITIAL = { nome: '', tipo: 'PROPRIO' as const, especialidade: '', telefone: '', custo_hora: 0 };
 
@@ -34,7 +34,7 @@ export default function Mecanicos() {
 
   async function load() {
     setIsLoading(true);
-    const { data } = await fromEmpresa('mecanicos').order('nome');
+    const { data } = await loadEntityList(fromEmpresa as any, 'mecanicos', 'nome');
     setItems(data || []);
     const { data: exec } = await fromEmpresa('execucoes_os').select('mecanico_id');
     if (exec) {
@@ -47,20 +47,20 @@ export default function Mecanicos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
-    const { error } = await insertWithEmpresa('mecanicos', form);
+    const { error } = await createEntity(insertWithEmpresa as any, 'mecanicos', form as unknown as Record<string, unknown>);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Mecânico cadastrado!' }); setDialogOpen(false); setForm(FORM_INITIAL); setSaving(false); load();
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault(); if (!selected) return; setSaving(true);
-    const { error } = await supabase.from('mecanicos').update(form).eq('id', selected.id);
+    const { error } = await updateEntityById('mecanicos', selected.id, form as unknown as Record<string, unknown>);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Mecânico atualizado!' }); setDetailOpen(false); setEditMode(false); setSaving(false); load();
   };
 
   const handleToggleAtivo = async (item: any) => {
-    const { error } = await supabase.from('mecanicos').update({ ativo: !item.ativo }).eq('id', item.id);
+    const { error } = await toggleEntityAtivo('mecanicos', item.id, !!item.ativo);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: item.ativo ? 'Mecânico desativado' : 'Mecânico ativado' }); load();
   };

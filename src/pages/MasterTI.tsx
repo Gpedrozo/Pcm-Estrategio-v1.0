@@ -14,7 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import {
   Loader2, Crown, Database, Users, FileText, Shield, Building2, CreditCard,
-  Plus, Pencil, Trash2, Power, UserCog, RefreshCw, Search, Info
+  Plus, Pencil, Trash2, Power, UserCog, RefreshCw, Search, Info, Lock, Activity
 } from 'lucide-react';
 import { MODULE_OPTIONS } from '@/constants/modules';
 
@@ -38,6 +38,16 @@ interface RoleRow {
   id: string; user_id: string; role: string; empresa_id: string | null;
 }
 
+interface AuditoriaRow {
+  id: string;
+  usuario_nome: string;
+  acao: string;
+  descricao: string;
+  tag: string | null;
+  created_at: string;
+  empresa_id: string | null;
+}
+
 const TODOS_MODULOS = MODULE_OPTIONS;
 
 export default function MasterTI() {
@@ -57,6 +67,7 @@ export default function MasterTI() {
   // Filters
   const [searchEmpresas, setSearchEmpresas] = useState('');
   const [searchUsuarios, setSearchUsuarios] = useState('');
+  const [searchAuditoria, setSearchAuditoria] = useState('');
 
   // Dialogs
   const [empresaDialog, setEmpresaDialog] = useState(false);
@@ -64,6 +75,11 @@ export default function MasterTI() {
   const [assinaturaDialog, setAssinaturaDialog] = useState(false);
   const [editingEmpresa, setEditingEmpresa] = useState<EmpresaRow | null>(null);
   const [editingPlano, setEditingPlano] = useState<PlanoRow | null>(null);
+
+  // Monitoramento e Auditoria
+  const [tableStats, setTableStats] = useState<Array<{ table: string; total: number }>>([]);
+  const [auditRows, setAuditRows] = useState<AuditoriaRow[]>([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
 
   // Forms
   const [formEmpresa, setFormEmpresa] = useState({ nome: '', cnpj: '', plano: 'BASICO' });
@@ -92,7 +108,31 @@ export default function MasterTI() {
     setIsLoading(false);
   }, []);
 
+  const loadMonitoramento = useCallback(async () => {
+    const tables = ['empresas', 'profiles', 'user_roles', 'ordens_servico', 'equipamentos', 'mecanicos', 'materiais', 'fornecedores', 'contratos', 'planos_saas', 'assinaturas', 'auditoria'];
+    const results = await Promise.all(
+      tables.map(async (table) => {
+        const { count } = await supabase.from(table as any).select('id', { count: 'exact', head: true });
+        return { table, total: count || 0 };
+      })
+    );
+    setTableStats(results.sort((a, b) => b.total - a.total));
+  }, []);
+
+  const loadAuditoria = useCallback(async () => {
+    setLoadingAudit(true);
+    const { data } = await supabase
+      .from('auditoria')
+      .select('id, usuario_nome, acao, descricao, tag, created_at, empresa_id')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    setAuditRows((data || []) as AuditoriaRow[]);
+    setLoadingAudit(false);
+  }, []);
+
   useEffect(() => { loadAll(); }, [loadAll]);
+  useEffect(() => { loadMonitoramento(); }, [loadMonitoramento]);
+  useEffect(() => { loadAuditoria(); }, [loadAuditoria]);
 
   // ─── Empresa CRUD ───────────────────────────────────
   const openNewEmpresa = () => { setEditingEmpresa(null); setFormEmpresa({ nome: '', cnpj: '', plano: 'BASICO' }); setEmpresaDialog(true); };
@@ -216,6 +256,22 @@ export default function MasterTI() {
   const getPlanoNome = (id: string) => planos.find(p => p.id === id)?.nome || '-';
   const filteredEmpresas = empresas.filter(e => e.nome.toLowerCase().includes(searchEmpresas.toLowerCase()));
   const filteredProfiles = profiles.filter(p => p.nome.toLowerCase().includes(searchUsuarios.toLowerCase()));
+  const filteredAuditoria = auditRows.filter(a => {
+    if (!searchAuditoria) return true;
+    const q = searchAuditoria.toLowerCase();
+    return (
+      a.usuario_nome?.toLowerCase().includes(q) ||
+      a.acao?.toLowerCase().includes(q) ||
+      a.descricao?.toLowerCase().includes(q) ||
+      a.tag?.toLowerCase().includes(q)
+    );
+  });
+
+  const securityStats = {
+    master: roles.filter(r => r.role === 'MASTER_TI').length,
+    admin: roles.filter(r => r.role === 'ADMIN').length,
+    usuario: roles.filter(r => r.role === 'USUARIO').length,
+  };
 
   const roleColor = (r: string) => {
     if (r === 'MASTER_TI') return 'destructive' as const;
@@ -257,11 +313,17 @@ export default function MasterTI() {
 
       {/* Tabs */}
       <Tabs defaultValue="empresas">
-        <TabsList className="grid grid-cols-5 w-full">
+        <TabsList className="grid grid-cols-2 md:grid-cols-5 xl:grid-cols-10 w-full h-auto gap-1">
           <TabsTrigger value="empresas"><Building2 className="h-4 w-4 mr-1 hidden sm:inline" />Empresas</TabsTrigger>
           <TabsTrigger value="planos"><CreditCard className="h-4 w-4 mr-1 hidden sm:inline" />Planos</TabsTrigger>
           <TabsTrigger value="assinaturas"><CreditCard className="h-4 w-4 mr-1 hidden sm:inline" />Assinaturas</TabsTrigger>
           <TabsTrigger value="usuarios"><UserCog className="h-4 w-4 mr-1 hidden sm:inline" />Usuários</TabsTrigger>
+          <TabsTrigger value="monitor"><Activity className="h-4 w-4 mr-1 hidden sm:inline" />Monitor</TabsTrigger>
+          <TabsTrigger value="auditoria"><FileText className="h-4 w-4 mr-1 hidden sm:inline" />Auditoria</TabsTrigger>
+          <TabsTrigger value="seguranca"><Lock className="h-4 w-4 mr-1 hidden sm:inline" />Segurança</TabsTrigger>
+          <TabsTrigger value="permissoes"><Shield className="h-4 w-4 mr-1 hidden sm:inline" />Permissões</TabsTrigger>
+          <TabsTrigger value="configuracoes"><Info className="h-4 w-4 mr-1 hidden sm:inline" />Configs</TabsTrigger>
+          <TabsTrigger value="documentos"><FileText className="h-4 w-4 mr-1 hidden sm:inline" />Documentos</TabsTrigger>
           <TabsTrigger value="sistema"><Info className="h-4 w-4 mr-1 hidden sm:inline" />Sistema</TabsTrigger>
         </TabsList>
 
@@ -302,6 +364,106 @@ export default function MasterTI() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="monitor">
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-lg">Monitoramento de Tabelas</CardTitle>
+              <Button size="sm" variant="outline" onClick={loadMonitoramento}><RefreshCw className="h-4 w-4 mr-1" />Recarregar</Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b bg-muted/50"><th className="p-3 text-left font-medium">Tabela</th><th className="p-3 text-left font-medium">Registros</th></tr></thead>
+                  <tbody>
+                    {tableStats.map(t => (
+                      <tr key={t.table} className="border-b hover:bg-muted/30">
+                        <td className="p-3 font-mono text-xs">{t.table}</td>
+                        <td className="p-3 font-bold text-primary">{t.total}</td>
+                      </tr>
+                    ))}
+                    {tableStats.length === 0 && <tr><td colSpan={2} className="p-8 text-center text-muted-foreground">Sem dados de monitoramento</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="auditoria">
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0 pb-4">
+              <CardTitle className="text-lg">Logs de Auditoria</CardTitle>
+              <div className="flex gap-2">
+                <div className="relative"><Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Buscar ação/usuário..." className="pl-8 w-56" value={searchAuditoria} onChange={e => setSearchAuditoria(e.target.value)} /></div>
+                <Button size="sm" variant="outline" onClick={loadAuditoria}><RefreshCw className="h-4 w-4 mr-1" />Atualizar</Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {loadingAudit ? (
+                <div className="p-8 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin" /></div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead><tr className="border-b bg-muted/50"><th className="p-3 text-left font-medium">Data</th><th className="p-3 text-left font-medium">Usuário</th><th className="p-3 text-left font-medium">Ação</th><th className="p-3 text-left font-medium">Descrição</th><th className="p-3 text-left font-medium">TAG</th></tr></thead>
+                    <tbody>
+                      {filteredAuditoria.map(log => (
+                        <tr key={log.id} className="border-b hover:bg-muted/30">
+                          <td className="p-3 text-xs">{new Date(log.created_at).toLocaleString('pt-BR')}</td>
+                          <td className="p-3">{log.usuario_nome || '-'}</td>
+                          <td className="p-3"><Badge variant="outline">{log.acao}</Badge></td>
+                          <td className="p-3">{log.descricao}</td>
+                          <td className="p-3 text-xs font-mono">{log.tag || '-'}</td>
+                        </tr>
+                      ))}
+                      {filteredAuditoria.length === 0 && <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">Nenhum log encontrado</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="seguranca">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card><CardHeader><CardTitle className="text-base">Perfis de Acesso</CardTitle></CardHeader><CardContent className="space-y-2">
+              <div className="flex justify-between"><span>MASTER_TI</span><span className="font-bold text-destructive">{securityStats.master}</span></div>
+              <div className="flex justify-between"><span>ADMIN</span><span className="font-bold text-primary">{securityStats.admin}</span></div>
+              <div className="flex justify-between"><span>USUARIO</span><span className="font-bold">{securityStats.usuario}</span></div>
+            </CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Controles Ativos</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
+              <div className="flex items-center justify-between"><span>RLS por empresa</span><Badge>Ativo</Badge></div>
+              <div className="flex items-center justify-between"><span>Auditoria automática DB</span><Badge>Ativo</Badge></div>
+              <div className="flex items-center justify-between"><span>Segregação por role</span><Badge>Ativo</Badge></div>
+            </CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Observações</CardTitle></CardHeader><CardContent className="text-sm text-muted-foreground space-y-2">
+              <p>Esta versão não possui tabelas dedicadas de <strong>security_logs</strong> e <strong>rate_limits</strong>.</p>
+              <p>O controle de segurança está baseado em RLS, roles e auditoria centralizada.</p>
+            </CardContent></Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="permissoes">
+          <Card><CardHeader><CardTitle className="text-lg">Permissões Granulares</CardTitle></CardHeader><CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>O gerenciamento detalhado de permissões foi centralizado no portal administrativo desta versão.</p>
+            <p>Use o menu de administração para configuração de módulos por plano e acesso por perfil.</p>
+          </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="configuracoes">
+          <Card><CardHeader><CardTitle className="text-lg">Configurações Globais</CardTitle></CardHeader><CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>Esta base não possui tabela dedicada de configurações globais equivalente ao repositório de referência.</p>
+            <p>As configurações operacionais estão distribuídas em planos, empresas e parâmetros dos módulos.</p>
+          </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="documentos">
+          <Card><CardHeader><CardTitle className="text-lg">Layouts de Documentos</CardTitle></CardHeader><CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p>O editor avançado de layout documental da versão de referência depende de estrutura adicional de dados.</p>
+            <p>Documentos técnicos e relatórios permanecem ativos nos módulos operacionais atuais.</p>
+          </CardContent></Card>
         </TabsContent>
 
         {/* ─── TAB PLANOS ─── */}

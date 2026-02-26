@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
-import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Plus, Search, Package, AlertTriangle, DollarSign, CheckCircle2, Eye, Pencil, XCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { createEntity, loadEntityList, toggleEntityAtivo, updateEntityById } from '@/services/entityCrudService';
 
 const FORM_INITIAL = { codigo: '', nome: '', unidade: 'UN', estoque_atual: 0, estoque_minimo: 0, custo_unitario: 0, localizacao: '' };
 
@@ -27,24 +27,29 @@ export default function Materiais() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { load(); }, [fromEmpresa]);
-  async function load() { setIsLoading(true); const { data } = await fromEmpresa('materiais').order('codigo'); setItems(data || []); setIsLoading(false); }
+  async function load() {
+    setIsLoading(true);
+    const { data } = await loadEntityList(fromEmpresa as any, 'materiais', 'codigo');
+    setItems(data || []);
+    setIsLoading(false);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
-    const { error } = await insertWithEmpresa('materiais', form);
+    const { error } = await createEntity(insertWithEmpresa as any, 'materiais', form as unknown as Record<string, unknown>);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Material cadastrado!' }); setDialogOpen(false); setForm(FORM_INITIAL); setSaving(false); load();
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault(); if (!selected) return; setSaving(true);
-    const { error } = await supabase.from('materiais').update(form).eq('id', selected.id);
+    const { error } = await updateEntityById('materiais', selected.id, form as unknown as Record<string, unknown>);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); setSaving(false); return; }
     toast({ title: 'Material atualizado!' }); setDetailOpen(false); setEditMode(false); setSaving(false); load();
   };
 
   const handleToggleAtivo = async (item: any) => {
-    const { error } = await supabase.from('materiais').update({ ativo: !item.ativo }).eq('id', item.id);
+    const { error } = await toggleEntityAtivo('materiais', item.id, !!item.ativo);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: item.ativo ? 'Material desativado' : 'Material ativado' }); load();
   };
