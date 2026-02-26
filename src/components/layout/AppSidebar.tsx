@@ -123,12 +123,20 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <img src={gppisLogo} alt="GPPIS Industrial Systems" className="h-10 w-auto" />
-          <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">PCM ESTRATÉGICO</h1>
-            <p className="text-xs text-sidebar-foreground/60">Sistema de Manutenção</p>
+      <SidebarHeader className="p-3 border-b border-sidebar-border bg-sidebar-accent/20">
+        <div className="flex items-center gap-3 rounded-lg border border-sidebar-border/70 bg-sidebar-accent/30 px-3 py-3">
+          <div className="h-12 w-12 rounded-lg border border-sidebar-border/60 bg-sidebar-background/70 flex items-center justify-center shrink-0">
+            <img src={gppisLogo} alt="GPPIS Industrial Systems" className="h-9 w-auto" />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold text-sidebar-foreground leading-none truncate">PCM ESTRATÉGICO</h1>
+              <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-sidebar-primary text-sidebar-primary-foreground">
+                v4
+              </span>
+            </div>
+            <p className="text-xs text-sidebar-foreground/70 mt-1 truncate">Sistema de Manutenção</p>
           </div>
         </div>
       </SidebarHeader>
