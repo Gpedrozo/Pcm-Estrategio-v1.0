@@ -41,6 +41,7 @@ import AnaliseIA from "./pages/AnaliseIA";
 import NotFound from "./pages/NotFound";
 import SiteHome from "./pages/SiteHome";
 import SystemPortal from "./pages/SystemPortal";
+import SystemsCatalog from "./pages/SystemsCatalog";
 
 // Admin Portal
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -64,8 +65,10 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<SiteHome />} />
-            <Route path="/portal" element={<SystemPortal />} />
-            <Route path="/acessar-sistema" element={<Navigate to="/portal" replace />} />
+            <Route path="/acessar" element={<SystemPortal />} />
+            <Route path="/sistemas" element={<SystemsCatalog />} />
+            <Route path="/portal" element={<Navigate to="/acessar" replace />} />
+            <Route path="/acessar-sistema" element={<Navigate to="/acessar" replace />} />
             <Route path="/start" element={<Index />} />
             <Route path="/login" element={<Login />} />
 
