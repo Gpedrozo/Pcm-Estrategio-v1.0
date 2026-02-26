@@ -9,14 +9,9 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Pencil, Trash2, CreditCard } from 'lucide-react';
+import { MODULE_OPTIONS } from '@/constants/modules';
 
-const TODOS_MODULOS = [
-  'DASHBOARD','SOLICITACOES','EMITIR_OS','FECHAR_OS','HISTORICO_OS',
-  'BACKLOG','PROGRAMACAO','PREVENTIVA','PREDITIVA','INSPECOES',
-  'FMEA','RCA','MELHORIAS','HIERARQUIA','EQUIPAMENTOS','MECANICOS',
-  'MATERIAIS','FORNECEDORES','CONTRATOS','DOCUMENTOS','LUBRIFICACAO',
-  'CUSTOS','RELATORIOS','SSMA','USUARIOS','AUDITORIA','ANALISE_IA',
-];
+const TODOS_MODULOS = MODULE_OPTIONS;
 
 export default function AdminPlanos() {
   const { toast } = useToast();
@@ -108,7 +103,7 @@ export default function AdminPlanos() {
                 <div className="flex justify-between"><span className="text-muted-foreground">Assinaturas Ativas</span><Badge variant="default">{getAssCount(p.id)}</Badge></div>
               </div>
               <div className="flex flex-wrap gap-1 pt-2 border-t">
-                {(p.modulos_ativos || []).map((m: string) => <Badge key={m} variant="outline" className="text-[10px]">{m}</Badge>)}
+                {(p.modulos_ativos || []).map((m: string) => <Badge key={m} variant="outline" className="text-[10px]">{m.toUpperCase()}</Badge>)}
               </div>
             </CardContent>
           </Card>
@@ -140,7 +135,7 @@ export default function AdminPlanos() {
                 {TODOS_MODULOS.map(m => (
                   <label key={m} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
                     <input type="checkbox" checked={form.modulos_ativos.includes(m)} onChange={() => toggleModulo(m)} className="rounded" />
-                    {m}
+                    {m.toUpperCase()}
                   </label>
                 ))}
               </div>

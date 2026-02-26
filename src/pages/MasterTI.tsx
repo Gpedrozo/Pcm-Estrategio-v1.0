@@ -16,6 +16,7 @@ import {
   Loader2, Crown, Database, Users, FileText, Shield, Building2, CreditCard,
   Plus, Pencil, Trash2, Power, UserCog, RefreshCw, Search, Info
 } from 'lucide-react';
+import { MODULE_OPTIONS } from '@/constants/modules';
 
 // ─── Tipos ───────────────────────────────────────────
 interface EmpresaRow {
@@ -37,13 +38,7 @@ interface RoleRow {
   id: string; user_id: string; role: string; empresa_id: string | null;
 }
 
-const TODOS_MODULOS = [
-  'DASHBOARD','SOLICITACOES','EMITIR_OS','FECHAR_OS','HISTORICO_OS',
-  'BACKLOG','PROGRAMACAO','PREVENTIVA','PREDITIVA','INSPECOES',
-  'FMEA','RCA','MELHORIAS','HIERARQUIA','EQUIPAMENTOS','MECANICOS',
-  'MATERIAIS','FORNECEDORES','CONTRATOS','DOCUMENTOS','LUBRIFICACAO',
-  'CUSTOS','RELATORIOS','SSMA','USUARIOS','AUDITORIA','ANALISE_IA',
-];
+const TODOS_MODULOS = MODULE_OPTIONS;
 
 export default function MasterTI() {
   const { empresa: minhaEmpresa } = useEmpresa();
@@ -333,7 +328,7 @@ export default function MasterTI() {
                       </div>
                       <p className="text-sm text-muted-foreground">Máx {p.max_usuarios} usuários</p>
                       <div className="flex flex-wrap gap-1">
-                        {(p.modulos_ativos || []).map(m => <Badge key={m} variant="secondary" className="text-xs">{m}</Badge>)}
+                        {(p.modulos_ativos || []).map(m => <Badge key={m} variant="secondary" className="text-xs">{m.toUpperCase()}</Badge>)}
                       </div>
                     </CardContent>
                   </Card>
@@ -503,7 +498,7 @@ export default function MasterTI() {
                 {TODOS_MODULOS.map(m => (
                   <label key={m} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-muted/50 p-1 rounded">
                     <input type="checkbox" checked={formPlano.modulos_ativos.includes(m)} onChange={() => toggleModulo(m)} className="rounded" />
-                    {m}
+                    {m.toUpperCase()}
                   </label>
                 ))}
               </div>

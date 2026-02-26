@@ -21,6 +21,7 @@ export type MaterialUtilizado = Tables<'materiais_utilizados'>;
 export type Solicitacao = Tables<'solicitacoes'>;
 export type Auditoria = Tables<'auditoria'>;
 export type Profile = Tables<'profiles'>;
+export type UserRole = Tables<'user_roles'>;
 export type PlanoSaas = Tables<'planos_saas'>;
 export type Assinatura = Tables<'assinaturas'>;
 
@@ -46,22 +47,3 @@ export interface Indicadores {
 export type StatusOS = 'ABERTA' | 'EM_ANDAMENTO' | 'AGUARDANDO_MATERIAL' | 'AGUARDANDO_APROVACAO' | 'FECHADA';
 export type TipoOS = 'CORRETIVA' | 'PREVENTIVA' | 'PREDITIVA' | 'INSPECAO' | 'MELHORIA';
 export type PrioridadeOS = 'URGENTE' | 'ALTA' | 'MEDIA' | 'BAIXA';
-
-// Module mapping for sidebar/route protection
-export const MODULO_ROTAS: Record<string, string[]> = {
-  dashboard: ['/dashboard'],
-  ordens_servico: ['/solicitacoes', '/backlog', '/os/nova', '/os/fechar', '/os/historico'],
-  planejamento: ['/lubrificacao', '/programacao', '/preventiva', '/preditiva', '/inspecoes'],
-  analises: ['/fmea', '/rca', '/melhorias'],
-  cadastros: ['/hierarquia', '/equipamentos', '/mecanicos', '/materiais', '/fornecedores', '/contratos', '/documentos'],
-  relatorios: ['/custos', '/relatorios'],
-  ssma: ['/ssma'],
-};
-
-// Reverse map: route -> module
-export const ROTA_MODULO: Record<string, string> = {};
-Object.entries(MODULO_ROTAS).forEach(([modulo, rotas]) => {
-  rotas.forEach(rota => {
-    ROTA_MODULO[rota] = modulo;
-  });
-});

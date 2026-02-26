@@ -37,7 +37,7 @@ export function AdminLayout() {
   }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!isMasterTI) return <Navigate to="/dashboard" replace />;
+  if (!isMasterTI || user?.tipo !== 'MASTER_TI') return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="flex min-h-screen w-full bg-background">

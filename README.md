@@ -1,73 +1,154 @@
-# Welcome to your Lovable project
+# PCM-Estratégico
 
-## Project info
+Sistema de Gestão de Manutenção Industrial (PCM) desenvolvido para organizar, controlar e otimizar processos de manutenção em ambientes industriais.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Projeto criado e mantido por Gustavo Pedrozo Pinto.
 
-## How can I edit this code?
+Empresa responsável pelo desenvolvimento:
 
-There are several ways of editing your application.
+GPPIS – Gustavo Pedrozo Pinto Industrial Systems
 
-**Use Lovable**
+Sobre o Projeto
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+O PCM-Estratégico é uma plataforma criada para resolver um problema comum dentro das indústrias:
+a falta de controle estruturado sobre manutenção.
 
-Changes made via Lovable will be committed automatically to this repo.
+O sistema permite:
 
-**Use your preferred IDE**
+Registro de solicitações de manutenção
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Emissão de Ordens de Serviço
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Planejamento da manutenção
 
-Follow these steps:
+Histórico de intervenções
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Controle de equipamentos
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Indicadores de desempenho da manutenção
 
-# Step 3: Install the necessary dependencies.
-npm i
+O objetivo é transformar a manutenção em um processo organizado, rastreável e estratégico.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Sobre o Criador
+
+Gustavo Pedrozo Pinto
+
+Fundador da GPPIS – Gustavo Pedrozo Pinto Industrial Systems.
+
+Atua no desenvolvimento de soluções para indústria, com foco em:
+
+Gestão da manutenção
+
+Sistemas industriais
+
+Organização de processos produtivos
+
+Digitalização de operações
+
+O PCM-Estratégico nasceu da experiência prática com operação industrial e necessidade real de melhorar o controle de manutenção.
+
+Sobre a Empresa
+
+GPPIS – Gustavo Pedrozo Pinto Industrial Systems
+
+Empresa dedicada ao desenvolvimento de soluções tecnológicas para o setor industrial.
+
+Foco principal:
+
+Sistemas de manutenção
+
+Ferramentas para gestão industrial
+
+Automação de processos operacionais
+
+Desenvolvimento de softwares internos para empresas
+
+A proposta da GPPIS é criar ferramentas simples, eficientes e adaptadas à realidade das indústrias.
+
+Principais Funcionalidades
+
+Gestão de Ordens de Serviço
+
+Solicitação de manutenção pela produção
+
+Controle de equipamentos e TAGs
+
+Planejamento da manutenção
+
+Histórico completo de intervenções
+
+Indicadores de desempenho
+
+Organização do setor de PCM
+
+Tecnologias Utilizadas
+
+Este projeto foi desenvolvido utilizando tecnologias modernas de desenvolvimento web:
+
+Vite
+
+TypeScript
+
+React
+
+Tailwind CSS
+
+shadcn/ui
+
+Instalação do Projeto
+
+Clone o repositório:
+
+git clone <URL_DO_REPOSITORIO>
+
+Entre na pasta do projeto:
+
+cd nome-do-projeto
+
+Instale as dependências:
+
+npm install
+
+Inicie o ambiente de desenvolvimento:
+
 npm run dev
-```
+Estrutura do Sistema
 
-**Edit a file directly in GitHub**
+O sistema foi organizado para facilitar expansão e manutenção.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Principais módulos:
 
-**Use GitHub Codespaces**
+Dashboard
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Ordens de Serviço
 
-## What technologies are used for this project?
+Solicitações
 
-This project is built with:
+Equipamentos
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Histórico de manutenção
 
-## How can I deploy this project?
+Indicadores
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Objetivo do Software
 
-## Can I connect a custom domain to my Lovable project?
+O objetivo do PCM-Estratégico é se tornar uma plataforma completa de gestão de manutenção industrial, permitindo que empresas tenham:
 
-Yes, you can!
+Maior controle operacional
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Redução de falhas
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Melhor planejamento
+
+Histórico técnico organizado
+
+Informações estratégicas para tomada de decisão
+
+Direitos
+
+Projeto desenvolvido por
+
+Gustavo Pedrozo Pinto
+GPPIS – Gustavo Pedrozo Pinto Industrial Systems
+
+Todos os direitos reservados.

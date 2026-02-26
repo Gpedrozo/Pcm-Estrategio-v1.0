@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEmpresa } from '@/contexts/EmpresaContext';
 import { useToast } from '@/hooks/use-toast';
@@ -11,10 +11,11 @@ export function useModuloGuard(modulo: string) {
   const { moduloAtivo, isLoading } = useEmpresa();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const allowed = useMemo(() => moduloAtivo(modulo), [moduloAtivo, modulo]);
 
   useEffect(() => {
     if (isLoading) return;
-    if (!moduloAtivo(modulo)) {
+    if (!allowed) {
       toast({
         title: 'Módulo não disponível',
         description: `O módulo "${modulo}" não está incluído no seu plano atual.`,
@@ -22,7 +23,7 @@ export function useModuloGuard(modulo: string) {
       });
       navigate('/dashboard', { replace: true });
     }
-  }, [modulo, moduloAtivo, isLoading, navigate, toast]);
+  }, [modulo, allowed, isLoading, navigate, toast]);
 
-  return { allowed: moduloAtivo(modulo), isLoading };
+  return { allowed, isLoading };
 }

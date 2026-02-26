@@ -1,7 +1,7 @@
 import { useEmpresa } from '@/contexts/EmpresaContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useMemo, useCallback } from 'react';
+import { useCallback } from 'react';
 import type { Database } from '@/integrations/supabase/types';
+import { insertWithEmpresaId, selectFromEmpresa } from '@/services/empresaQueryService';
 
 type TableName = keyof Database['public']['Tables'];
 
@@ -16,18 +16,14 @@ export function useEmpresaQuery() {
   /** Retorna query builder filtrado por empresa_id */
   const fromEmpresa = useCallback(
     <T extends TableName>(table: T) => {
-      const query = supabase.from(table).select('*');
-      if (empresaId) {
-        return query.eq('empresa_id' as any, empresaId);
-      }
-      return query;
+      return selectFromEmpresa(table, empresaId);
     },
     [empresaId]
   );
 
   /** Adiciona empresa_id ao objeto de insert */
   const withEmpresa = useCallback(
-    <T extends Record<string, any>>(data: T): T & { empresa_id: string | null } => {
+    <T extends Record<string, unknown>>(data: T): T & { empresa_id: string | null } => {
       return { ...data, empresa_id: empresaId };
     },
     [empresaId]
@@ -35,10 +31,10 @@ export function useEmpresaQuery() {
 
   /** Insert com empresa_id automático */
   const insertWithEmpresa = useCallback(
-    async (table: string, data: Record<string, any>) => {
-      return supabase.from(table as any).insert(withEmpresa(data) as any);
+    async (table: string, data: Record<string, unknown>) => {
+      return insertWithEmpresaId(table, data, empresaId);
     },
-    [withEmpresa]
+    [empresaId]
   );
 
   return { empresaId, fromEmpresa, withEmpresa, insertWithEmpresa };

@@ -3,9 +3,9 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmpresa } from '@/contexts/EmpresaContext';
-import { ROTA_MODULO } from '@/types';
+import { getRouteModule } from '@/config/routeModules';
 import { Menu, Loader2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,20 +15,26 @@ export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const routeModule = useMemo(() => getRouteModule(location.pathname), [location.pathname]);
+  const allowed = useMemo(() => {
+    if (!routeModule) return false;
+    return moduloAtivo(routeModule);
+  }, [moduloAtivo, routeModule]);
 
   // Route protection based on module
   useEffect(() => {
     if (isLoading || empresaLoading) return;
-    const modulo = ROTA_MODULO[location.pathname];
-    if (modulo && !moduloAtivo(modulo)) {
+    if (!allowed) {
       toast({
-        title: 'Módulo não disponível',
-        description: 'Este módulo não está incluído no seu plano atual.',
+        title: routeModule ? 'Módulo não disponível' : 'Rota não permitida',
+        description: routeModule
+          ? 'Este módulo não está incluído no seu plano atual.'
+          : 'Esta rota não está mapeada para acesso no sistema.',
         variant: 'destructive',
       });
       navigate('/dashboard', { replace: true });
     }
-  }, [location.pathname, moduloAtivo, isLoading, empresaLoading, navigate, toast]);
+  }, [allowed, routeModule, isLoading, empresaLoading, navigate, toast]);
 
   if (isLoading) {
     return (

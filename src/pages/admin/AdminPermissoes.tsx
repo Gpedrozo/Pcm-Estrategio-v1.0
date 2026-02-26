@@ -7,14 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Shield, RefreshCw } from 'lucide-react';
+import { MODULE_OPTIONS } from '@/constants/modules';
 
-const TODOS_MODULOS = [
-  'DASHBOARD','SOLICITACOES','EMITIR_OS','FECHAR_OS','HISTORICO_OS',
-  'BACKLOG','PROGRAMACAO','PREVENTIVA','PREDITIVA','INSPECOES',
-  'FMEA','RCA','MELHORIAS','HIERARQUIA','EQUIPAMENTOS','MECANICOS',
-  'MATERIAIS','FORNECEDORES','CONTRATOS','DOCUMENTOS','LUBRIFICACAO',
-  'CUSTOS','RELATORIOS','SSMA','USUARIOS','AUDITORIA','ANALISE_IA',
-];
+const TODOS_MODULOS = MODULE_OPTIONS;
 
 export default function AdminPermissoes() {
   const { toast } = useToast();
@@ -119,7 +114,7 @@ export default function AdminPermissoes() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {TODOS_MODULOS.map(m => (
                 <div key={m} className="flex items-center justify-between p-3 rounded-md border hover:bg-muted/30 transition-colors">
-                  <span className="text-sm font-medium">{m}</span>
+                  <span className="text-sm font-medium">{m.toUpperCase()}</span>
                   <Switch checked={currentModulos.includes(m)} onCheckedChange={() => toggleModulo(m)} />
                 </div>
               ))}

@@ -16,6 +16,7 @@ import {
   SidebarMenuItem, SidebarHeader, SidebarFooter,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { MODULES } from '@/constants/modules';
 
 type MenuItem = { title: string; url: string; icon: React.ElementType };
 
@@ -77,13 +78,13 @@ interface MenuGroup {
 }
 
 const menuGroups: MenuGroup[] = [
-  { label: 'Principal', modulo: 'dashboard', items: mainMenuItems },
-  { label: 'Ordens de Serviço', modulo: 'ordens_servico', items: osMenuItems },
-  { label: 'Planejamento', modulo: 'planejamento', items: planejamentoMenuItems },
-  { label: 'Análises', modulo: 'analises', items: analisesMenuItems },
-  { label: 'Cadastros', modulo: 'cadastros', items: cadastroMenuItems },
-  { label: 'Relatórios', modulo: 'relatorios', items: relatoriosMenuItems },
-  { label: 'Segurança', modulo: 'ssma', items: ssmaMenuItems },
+  { label: 'Principal', modulo: MODULES.DASHBOARD, items: mainMenuItems },
+  { label: 'Ordens de Serviço', modulo: MODULES.ORDENS_SERVICO, items: osMenuItems },
+  { label: 'Planejamento', modulo: MODULES.PLANEJAMENTO, items: planejamentoMenuItems },
+  { label: 'Análises', modulo: MODULES.ANALISES, items: analisesMenuItems },
+  { label: 'Cadastros', modulo: MODULES.CADASTROS, items: cadastroMenuItems },
+  { label: 'Relatórios', modulo: MODULES.RELATORIOS, items: relatoriosMenuItems },
+  { label: 'Segurança', modulo: MODULES.SSMA, items: ssmaMenuItems },
 ];
 
 export function AppSidebar() {

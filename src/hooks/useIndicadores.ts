@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEmpresaQuery } from './useEmpresaQuery';
 import type { Indicadores } from '@/types';
+import { fetchIndicadoresBaseData } from '@/services/indicadoresService';
 
 export function useIndicadores() {
   const { fromEmpresa, empresaId } = useEmpresaQuery();
@@ -8,13 +9,7 @@ export function useIndicadores() {
   return useQuery({
     queryKey: ['indicadores', empresaId],
     queryFn: async () => {
-      const [ordensRes, execRes] = await Promise.all([
-        fromEmpresa('ordens_servico'),
-        fromEmpresa('execucoes_os'),
-      ]);
-
-      const ordens = ordensRes.data || [];
-      const execucoes = execRes.data || [];
+      const { ordens, execucoes } = await fetchIndicadoresBaseData(fromEmpresa);
 
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -74,5 +69,6 @@ export function useIndicadores() {
 
       return indicadores;
     },
+    enabled: !!empresaId,
   });
 }

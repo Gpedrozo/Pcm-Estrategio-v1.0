@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
+import { normalizeModuleList, normalizeModuleName } from '@/constants/modules';
 
 interface Empresa {
   id: string;
@@ -100,12 +101,17 @@ export function EmpresaProvider({ children }: { children: React.ReactNode }) {
     loadEmpresa();
   }, [isAuthenticated, user]);
 
-  const moduloAtivo = (modulo: string): boolean => {
-    // MASTER_TI always has access to everything
+  const modulosAtivosNormalizados = useMemo(
+    () => normalizeModuleList(assinatura?.modulos_ativos),
+    [assinatura?.modulos_ativos]
+  );
+
+  const moduloAtivo = useCallback((modulo: string): boolean => {
     if (user?.tipo === 'MASTER_TI') return true;
-    if (!assinatura?.modulos_ativos) return false;
-    return assinatura.modulos_ativos.includes(modulo);
-  };
+    const moduloNormalizado = normalizeModuleName(modulo);
+    if (!moduloNormalizado) return false;
+    return modulosAtivosNormalizados.includes(moduloNormalizado);
+  }, [modulosAtivosNormalizados, user?.tipo]);
 
   return (
     <EmpresaContext.Provider value={{ empresa, assinatura, isLoading, moduloAtivo }}>
