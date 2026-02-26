@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Crown, Factory, Gauge, Layers3, Settings2, Wrench } from 'lucide-react';
 import gppisLogo from '@/assets/gppis-logo.png';
+import { useAuth } from '@/contexts/AuthContext';
 
 const systems = [
   {
@@ -46,6 +47,13 @@ const systems = [
 ];
 
 export default function SystemPortal() {
+  const { isMasterTI } = useAuth();
+
+  const visibleSystems = systems.filter((system) => {
+    if (system.href === '/admin') return isMasterTI;
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.12),transparent_55%)]">
       <div className="mx-auto max-w-7xl px-6 py-12">
@@ -76,7 +84,7 @@ export default function SystemPortal() {
         </header>
 
         <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {systems.map((system) => (
+          {visibleSystems.map((system) => (
             <article key={system.name} className="group rounded-2xl border border-border bg-card/70 p-5 backdrop-blur-sm hover:border-primary/40 hover:-translate-y-0.5 hover:shadow-xl transition-all">
               <div className={`inline-flex h-11 w-11 items-center justify-center rounded-lg border ${system.color}`}>
                 <system.icon className="h-5 w-5" />

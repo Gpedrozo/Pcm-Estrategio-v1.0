@@ -4,7 +4,7 @@ import {
   Building2, Package, MessageSquare, Calendar, Search,
   Shield, TrendingUp, FileSearch, Lightbulb, Truck,
   Inbox, CalendarClock, Activity, DollarSign, BarChart3,
-  FileArchive, Crown, Droplet, Lock, Brain
+  FileArchive, Droplet, Lock, Brain
 } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -88,7 +88,7 @@ const menuGroups: MenuGroup[] = [
 ];
 
 export function AppSidebar() {
-  const { user, logout, isAdmin, isMasterTI } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { moduloAtivo } = useEmpresa();
   const location = useLocation();
 
@@ -162,20 +162,6 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {isMasterTI && (
-          <SidebarGroup className="mt-2">
-            <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-xs font-semibold px-3 mb-2">
-              Master TI
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {renderMenuLink({ title: 'Painel Master', url: '/master-ti', icon: Crown })}
-                {renderMenuLink({ title: '🌐 Admin da Plataforma', url: '/admin', icon: Crown })}
-                {renderMenuLink({ title: '🧭 Portal de Sistemas', url: '/portal', icon: Crown })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border space-y-3">

@@ -36,7 +36,6 @@ import Relatorios from "./pages/Relatorios";
 import SSMAPage from "./pages/SSMAPage";
 import Usuarios from "./pages/Usuarios";
 import Auditoria from "./pages/Auditoria";
-import MasterTI from "./pages/MasterTI";
 import AnaliseIA from "./pages/AnaliseIA";
 import NotFound from "./pages/NotFound";
 import SiteHome from "./pages/SiteHome";
@@ -100,8 +99,17 @@ const App = () => (
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/auditoria" element={<Auditoria />} />
               <Route path="/analise-ia" element={<AnaliseIA />} />
-              <Route path="/master-ti" element={<MasterTI />} />
+              <Route path="/master-ti" element={<Navigate to="/admin" replace />} />
             </Route>
+
+            <Route path="/gestao" element={<Navigate to="/admin" replace />} />
+            <Route path="/gestao/empresas" element={<Navigate to="/admin/empresas" replace />} />
+            <Route path="/gestao/usuarios" element={<Navigate to="/admin/usuarios" replace />} />
+            <Route path="/gestao/planos" element={<Navigate to="/admin/planos" replace />} />
+            <Route path="/gestao/assinaturas" element={<Navigate to="/admin/assinaturas" replace />} />
+            <Route path="/gestao/metricas" element={<Navigate to="/admin/metricas" replace />} />
+            <Route path="/gestao/permissoes" element={<Navigate to="/admin/permissoes" replace />} />
+            <Route path="/gestao/config" element={<Navigate to="/admin/config" replace />} />
 
             {/* Portal Admin — MASTER_TI only */}
             <Route element={<AdminLayout />}>
