@@ -205,7 +205,7 @@ export default function AdminConfig() {
   const security = [
     ['Row Level Security (RLS)', 'Ativo em todas as tabelas'],
     ['Isolamento Multi-Empresa', 'empresa_id em todas as tabelas operacionais'],
-    ['Roles', 'USUARIO, ADMIN, MASTER_TI'],
+    ['Roles', 'USUARIO, SOLICITANTE, ADMIN, MASTER_TI'],
     ['Funções de Segurança', 'has_role(), get_user_empresa_id() — SECURITY DEFINER'],
     ['Auditoria', 'Registro automático de login/logout e ações'],
   ];

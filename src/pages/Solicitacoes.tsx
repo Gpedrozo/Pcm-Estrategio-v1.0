@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +13,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Plus, Search, FileText, AlertTriangle, CheckCircle2, Clock, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 export default function Solicitacoes() {
-  const { fromEmpresa, insertWithEmpresa } = useEmpresaQuery();
+  const { user, isAdmin } = useAuth();
+  const { fromEmpresa, insertWithEmpresa, empresaId } = useEmpresaQuery();
+  const navigate = useNavigate();
   const [items, setItems] = useState<any[]>([]);
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,13 +26,22 @@ export default function Solicitacoes() {
   const [filterStatus, setFilterStatus] = useState('TODOS');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selected, setSelected] = useState<any>(null);
-  const [form, setForm] = useState({ tag: '', equipamento: '', descricao: '', solicitante: '', prioridade: 'MEDIA' as const });
+  const [form, setForm] = useState({ tag: '', equipamento: '', descricao: '', solicitante: user?.nome || '', prioridade: 'MEDIA' as const });
 
   useEffect(() => { load(); }, [fromEmpresa]);
+  useEffect(() => {
+    setForm((prev) => ({ ...prev, solicitante: user?.nome || prev.solicitante }));
+  }, [user?.nome]);
+
   async function load() {
     setIsLoading(true);
+    const solicitacoesQuery = fromEmpresa('solicitacoes').order('created_at', { ascending: false });
+    const scopedSolicitacoes = user?.tipo === 'SOLICITANTE'
+      ? solicitacoesQuery.eq('usuario_id', user.id)
+      : solicitacoesQuery;
+
     const [sol, equip] = await Promise.all([
-      fromEmpresa('solicitacoes').order('created_at', { ascending: false }),
+      scopedSolicitacoes,
       fromEmpresa('equipamentos').eq('ativo', true).order('tag'),
     ]);
     setItems(sol.data || []); setEquipamentos(equip.data || []); setIsLoading(false);
@@ -41,16 +54,20 @@ export default function Solicitacoes() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await insertWithEmpresa('solicitacoes', form);
+    const { error } = await insertWithEmpresa('solicitacoes', { ...form, usuario_id: user?.id || null });
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Solicitação registrada!' }); setDialogOpen(false);
-    setForm({ tag: '', equipamento: '', descricao: '', solicitante: '', prioridade: 'MEDIA' }); load();
+    setForm({ tag: '', equipamento: '', descricao: '', solicitante: user?.nome || '', prioridade: 'MEDIA' }); load();
   };
 
   const handleAprovar = async (item: any) => {
-    const { error } = await supabase.from('solicitacoes').update({ status: 'APROVADA' }).eq('id', item.id);
+    const { error } = await supabase.from('solicitacoes').update({ status: 'APROVADA' }).eq('id', item.id).eq('empresa_id', empresaId);
     if (error) { toast({ title: 'Erro', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Solicitação aprovada!' }); setSelected(null); load();
+  };
+
+  const handleEmitirOS = (item: any) => {
+    navigate('/os/nova', { state: { solicitacaoId: item.id } });
   };
 
   const filtered = items.filter(i => {
@@ -130,7 +147,14 @@ export default function Solicitacoes() {
                 <div className="space-y-1 col-span-2"><p className="text-xs text-muted-foreground uppercase tracking-wider">Descrição</p><p className="text-sm">{selected.descricao}</p></div>
                 <div className="space-y-1"><p className="text-xs text-muted-foreground uppercase tracking-wider">Data</p><p className="text-sm">{new Date(selected.created_at).toLocaleString('pt-BR')}</p></div>
               </div>
-              {selected.status === 'PENDENTE' && <div className="flex gap-2"><Button onClick={() => handleAprovar(selected)} className="btn-industrial gap-2"><CheckCircle2 className="h-4 w-4" />Aprovar</Button></div>}
+              <div className="flex gap-2">
+                {isAdmin && selected.status === 'PENDENTE' && <Button onClick={() => handleAprovar(selected)} className="btn-industrial gap-2"><CheckCircle2 className="h-4 w-4" />Aprovar</Button>}
+                {isAdmin && selected.status === 'APROVADA' && !selected.os_gerada_id && (
+                  <Button variant="outline" onClick={() => handleEmitirOS(selected)}>
+                    Abrir O.S desta solicitação
+                  </Button>
+                )}
+              </div>
             </div>
           </>)}
         </DialogContent>

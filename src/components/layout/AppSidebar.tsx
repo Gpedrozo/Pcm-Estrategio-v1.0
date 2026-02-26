@@ -91,6 +91,7 @@ export function AppSidebar() {
   const { user, logout, isAdmin } = useAuth();
   const { moduloAtivo, empresa } = useEmpresa();
   const location = useLocation();
+  const isSolicitanteOnly = user?.tipo === 'SOLICITANTE';
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -144,7 +145,12 @@ export function AppSidebar() {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {group.items.map(item => renderMenuLink(item, !isModuloAtivo))}
+                  {group.items
+                    .filter((item) => {
+                      if (!isSolicitanteOnly) return true;
+                      return item.url === '/dashboard' || item.url === '/solicitacoes';
+                    })
+                    .map(item => renderMenuLink(item, !isModuloAtivo))}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

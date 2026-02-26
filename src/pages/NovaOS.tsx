@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { FilePlus, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { Link, useLocation } from 'react-router-dom';
 import type { Database } from '@/integrations/supabase/types';
 
 type TipoOS = Database['public']['Enums']['tipo_os'];
@@ -16,47 +18,137 @@ type PrioridadeOS = Database['public']['Enums']['prioridade_os'];
 
 export default function NovaOS() {
   const { user } = useAuth();
-  const { fromEmpresa, insertWithEmpresa } = useEmpresaQuery();
+  const { fromEmpresa, empresaId } = useEmpresaQuery();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [equipamentos, setEquipamentos] = useState<any[]>([]);
+  const [solicitacoesAprovadas, setSolicitacoesAprovadas] = useState<any[]>([]);
+  const [solicitacaoId, setSolicitacaoId] = useState<string>('none');
   const [form, setForm] = useState({
     tipo: 'CORRETIVA' as TipoOS, prioridade: 'MEDIA' as PrioridadeOS,
     tag: '', equipamento: '', solicitante: user?.nome || '', problema: '', tempo_estimado: '', custo_estimado: '',
   });
 
   useEffect(() => {
-    fromEmpresa('equipamentos').eq('ativo', true).then(({ data }) => setEquipamentos(data || []));
-  }, [fromEmpresa]);
+    const loadData = async () => {
+      const [equipResult, solicitacoesResult] = await Promise.all([
+        fromEmpresa('equipamentos').eq('ativo', true).order('tag'),
+        fromEmpresa('solicitacoes').eq('status', 'APROVADA').is('os_gerada_id', null).order('created_at', { ascending: false }),
+      ]);
+
+      setEquipamentos(equipResult.data || []);
+      const aprovadas = solicitacoesResult.data || [];
+      setSolicitacoesAprovadas(aprovadas);
+
+      const stateSolicitacaoId = (location.state as { solicitacaoId?: string } | null)?.solicitacaoId;
+      if (stateSolicitacaoId && aprovadas.some((s) => s.id === stateSolicitacaoId)) {
+        setSolicitacaoId(stateSolicitacaoId);
+        const selectedSolicitacao = aprovadas.find((s) => s.id === stateSolicitacaoId);
+        if (selectedSolicitacao) {
+          setForm((prev) => ({
+            ...prev,
+            prioridade: selectedSolicitacao.prioridade || prev.prioridade,
+            tag: selectedSolicitacao.tag || prev.tag,
+            equipamento: selectedSolicitacao.equipamento || prev.equipamento,
+            solicitante: selectedSolicitacao.solicitante || prev.solicitante,
+            problema: selectedSolicitacao.descricao || prev.problema,
+          }));
+        }
+      }
+    };
+
+    loadData();
+  }, [fromEmpresa, location.state]);
 
   const handleTagChange = (tag: string) => {
     const equip = equipamentos.find(e => e.tag === tag);
     setForm(prev => ({ ...prev, tag, equipamento: equip?.nome || '' }));
   };
 
+  const handleSolicitacaoChange = (value: string) => {
+    setSolicitacaoId(value);
+    if (value === 'none') return;
+    const selected = solicitacoesAprovadas.find((s) => s.id === value);
+    if (!selected) return;
+
+    setForm((prev) => ({
+      ...prev,
+      prioridade: selected.prioridade || prev.prioridade,
+      tag: selected.tag || prev.tag,
+      equipamento: selected.equipamento || prev.equipamento,
+      solicitante: selected.solicitante || prev.solicitante,
+      problema: selected.descricao || prev.problema,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { error } = await insertWithEmpresa('ordens_servico', {
+      const { data: osCriada, error } = await supabase.from('ordens_servico').insert({
+        empresa_id: empresaId,
         tipo: form.tipo, prioridade: form.prioridade, tag: form.tag, equipamento: form.equipamento,
         solicitante: form.solicitante, problema: form.problema, usuario_abertura_id: user?.id,
         usuario_abertura: user?.nome || 'Usuário',
         tempo_estimado: form.tempo_estimado ? parseInt(form.tempo_estimado) : null,
         custo_estimado: form.custo_estimado ? parseFloat(form.custo_estimado) : null,
-      });
+      }).select('id').single();
       if (error) throw error;
+
+      if (solicitacaoId !== 'none' && osCriada?.id) {
+        const { error: solicitacaoError } = await supabase
+          .from('solicitacoes')
+          .update({ status: 'EM_OS', os_gerada_id: osCriada.id })
+          .eq('id', solicitacaoId)
+          .eq('empresa_id', empresaId);
+
+        if (solicitacaoError) throw solicitacaoError;
+      }
+
       toast({ title: 'O.S criada com sucesso!' });
+      const [solicitacoesResult] = await Promise.all([
+        fromEmpresa('solicitacoes').eq('status', 'APROVADA').is('os_gerada_id', null).order('created_at', { ascending: false }),
+      ]);
+      setSolicitacoesAprovadas(solicitacoesResult.data || []);
+      setSolicitacaoId('none');
       setForm({ tipo: 'CORRETIVA', prioridade: 'MEDIA', tag: '', equipamento: '', solicitante: user?.nome || '', problema: '', tempo_estimado: '', custo_estimado: '' });
     } catch (error: any) {
       toast({ title: 'Erro ao criar O.S', description: error.message, variant: 'destructive' });
     } finally { setIsLoading(false); }
   };
 
+  if (user?.tipo === 'SOLICITANTE') {
+    return (
+      <div className="space-y-6">
+        <div className="page-header"><h1 className="page-title">Emitir Ordem de Serviço</h1><p className="page-subtitle">Acesso restrito para este perfil</p></div>
+        <Card className="card-industrial max-w-2xl"><CardContent className="p-6 space-y-3">
+          <p className="text-sm text-muted-foreground">Seu perfil permite apenas criar e acompanhar solicitações de serviço.</p>
+          <Button asChild className="btn-industrial w-fit"><Link to="/solicitacoes">Ir para Solicitações</Link></Button>
+        </CardContent></Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="page-header"><h1 className="page-title">Emitir Ordem de Serviço</h1><p className="page-subtitle">Preencha os dados para criar uma nova O.S</p></div>
       <Card className="card-industrial max-w-3xl"><CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Solicitação aprovada (opcional)</Label>
+            <Select value={solicitacaoId} onValueChange={handleSolicitacaoChange}>
+              <SelectTrigger><SelectValue placeholder="Selecionar solicitação" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem solicitação vinculada</SelectItem>
+                {solicitacoesAprovadas.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.tag} • {s.solicitante} • {new Date(s.created_at).toLocaleDateString('pt-BR')}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2"><Label>Tipo</Label>
               <Select value={form.tipo} onValueChange={(v) => setForm(prev => ({ ...prev, tipo: v as TipoOS }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="CORRETIVA">Corretiva</SelectItem><SelectItem value="PREVENTIVA">Preventiva</SelectItem><SelectItem value="PREDITIVA">Preditiva</SelectItem><SelectItem value="INSPECAO">Inspeção</SelectItem><SelectItem value="MELHORIA">Melhoria</SelectItem></SelectContent></Select></div>

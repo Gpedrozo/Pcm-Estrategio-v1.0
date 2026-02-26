@@ -305,6 +305,7 @@ export default function MasterTI() {
   const securityStats = {
     master: roles.filter(r => r.role === 'MASTER_TI').length,
     admin: roles.filter(r => r.role === 'ADMIN').length,
+    solicitante: roles.filter(r => r.role === 'SOLICITANTE').length,
     usuario: roles.filter(r => r.role === 'USUARIO').length,
   };
 
@@ -466,6 +467,7 @@ export default function MasterTI() {
             <Card><CardHeader><CardTitle className="text-base">Perfis de Acesso</CardTitle></CardHeader><CardContent className="space-y-2">
               <div className="flex justify-between"><span>MASTER_TI</span><span className="font-bold text-destructive">{securityStats.master}</span></div>
               <div className="flex justify-between"><span>ADMIN</span><span className="font-bold text-primary">{securityStats.admin}</span></div>
+              <div className="flex justify-between"><span>SOLICITANTE</span><span className="font-bold">{securityStats.solicitante}</span></div>
               <div className="flex justify-between"><span>USUARIO</span><span className="font-bold">{securityStats.usuario}</span></div>
             </CardContent></Card>
             <Card><CardHeader><CardTitle className="text-base">Eventos de Segurança</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
@@ -597,6 +599,7 @@ export default function MasterTI() {
                               <SelectTrigger className="w-32 h-8"><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="USUARIO">USUARIO</SelectItem>
+                                <SelectItem value="SOLICITANTE">SOLICITANTE</SelectItem>
                                 <SelectItem value="ADMIN">ADMIN</SelectItem>
                                 <SelectItem value="MASTER_TI">MASTER_TI</SelectItem>
                               </SelectContent>

@@ -11,12 +11,13 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 export function AppLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { moduloAtivo, isLoading: empresaLoading } = useEmpresa();
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const routeModule = useMemo(() => getRouteModule(location.pathname), [location.pathname]);
+  const allowedSolicitantePaths = useMemo(() => ['/dashboard', '/solicitacoes'], []);
   const lastBlockedPathRef = useRef<string | null>(null);
   const allowed = useMemo(() => {
     if (!routeModule) return false;
@@ -44,6 +45,19 @@ export function AppLayout() {
       return;
     }
 
+    if (user?.tipo === 'SOLICITANTE' && !allowedSolicitantePaths.includes(location.pathname)) {
+      if (lastBlockedPathRef.current !== location.pathname) {
+        lastBlockedPathRef.current = location.pathname;
+        toast({
+          title: 'Acesso restrito',
+          description: 'Seu perfil permite apenas registrar e consultar solicitações.',
+          variant: 'destructive',
+        });
+      }
+      navigate('/solicitacoes', { replace: true });
+      return;
+    }
+
     if (!allowed) {
       if (location.pathname !== '/dashboard') {
         if (lastBlockedPathRef.current !== location.pathname) {
@@ -62,6 +76,8 @@ export function AppLayout() {
   }, [
     allowed,
     routeModule,
+    user?.tipo,
+    allowedSolicitantePaths,
     isAuthenticated,
     isLoading,
     empresaLoading,

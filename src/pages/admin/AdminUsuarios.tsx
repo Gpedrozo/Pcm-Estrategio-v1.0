@@ -56,7 +56,7 @@ export default function AdminUsuarios() {
     load();
   };
 
-  const roleColor = (r: string) => r === 'MASTER_TI' ? 'destructive' as const : r === 'ADMIN' ? 'default' as const : 'secondary' as const;
+  const roleColor = (r: string) => r === 'MASTER_TI' ? 'destructive' as const : r === 'ADMIN' ? 'default' as const : r === 'SOLICITANTE' ? 'outline' as const : 'secondary' as const;
 
   const filtered = profiles.filter(p => {
     const matchSearch = p.nome.toLowerCase().includes(search.toLowerCase());
@@ -93,6 +93,7 @@ export default function AdminUsuarios() {
           <SelectContent>
             <SelectItem value="all">Todas as roles</SelectItem>
             <SelectItem value="USUARIO">USUARIO</SelectItem>
+            <SelectItem value="SOLICITANTE">SOLICITANTE</SelectItem>
             <SelectItem value="ADMIN">ADMIN</SelectItem>
             <SelectItem value="MASTER_TI">MASTER_TI</SelectItem>
           </SelectContent>
@@ -124,6 +125,7 @@ export default function AdminUsuarios() {
                         <SelectTrigger className="w-32 h-8"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="USUARIO">USUARIO</SelectItem>
+                          <SelectItem value="SOLICITANTE">SOLICITANTE</SelectItem>
                           <SelectItem value="ADMIN">ADMIN</SelectItem>
                           <SelectItem value="MASTER_TI">MASTER_TI</SelectItem>
                         </SelectContent>
