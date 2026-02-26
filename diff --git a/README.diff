@@ -1,0 +1,126 @@
+diff --git a/README.md b/README.md
+--- README.md
++++ README.md
+@@ -1,33 +1,101 @@
+ # PCM-Estratégico
+ 
++<<<<<<< HEAD
++Sistema de **Gestão de Manutenção Industrial (PCM)**.
++=======
+ Sistema de Gestão de Manutenção Industrial (PCM) desenvolvido para organizar, controlar e otimizar processos de manutenção em ambientes industriais.
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++Desenvolvido por **Gustavo Pedrozo Pinto**  
++Empresa: **GPPIS – Gustavo Pedrozo Pinto Industrial Systems**
++=======
+ Projeto criado e mantido por Gustavo Pedrozo Pinto.
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++---
++=======
+ Empresa responsável pelo desenvolvimento:
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++## Sobre o Sistema
++=======
+ GPPIS – Gustavo Pedrozo Pinto Industrial Systems
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++O PCM-Estratégico é uma plataforma criada para organizar e controlar processos de manutenção industrial, permitindo registrar solicitações, emitir ordens de serviço, acompanhar execuções e analisar indicadores.
++=======
+ Sobre o Projeto
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++---
++=======
+ O PCM-Estratégico é uma plataforma criada para resolver um problema comum dentro das indústrias:
+ a falta de controle estruturado sobre manutenção.
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++## Principais Funcionalidades
++=======
+ O sistema permite:
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++- Solicitações de manutenção  
++- Ordens de Serviço (O.S.)  
++- Controle de equipamentos  
++- Histórico de manutenções  
++- Indicadores de manutenção  
++- Gestão por empresa (estrutura SaaS)
++=======
+ Registro de solicitações de manutenção
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++---
++=======
+ Emissão de Ordens de Serviço
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++## Tecnologias
++=======
+ Planejamento da manutenção
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++- React  
++- TypeScript  
++- Vite  
++- Tailwind CSS  
++- Supabase
++=======
+ Histórico de intervenções
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++---
++=======
+ Controle de equipamentos
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++## Executar o Projeto
++=======
+ Indicadores de desempenho da manutenção
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ 
++<<<<<<< HEAD
++```bash
++git clone <URL_DO_REPOSITORIO>
++cd <PROJETO>
++npm install
++=======
+ O objetivo é transformar a manutenção em um processo organizado, rastreável e estratégico.
+ 
+ Sobre o Criador
+ 
+@@ -110,9 +178,12 @@
+ npm install
+ 
+ Inicie o ambiente de desenvolvimento:
+ 
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+ npm run dev
++<<<<<<< HEAD
++=======
+ Estrutura do Sistema
+ 
+ O sistema foi organizado para facilitar expansão e manutenção.
+ 
+@@ -151,4 +222,6 @@
+ Gustavo Pedrozo Pinto
+ GPPIS – Gustavo Pedrozo Pinto Industrial Systems
+ 
+ Todos os direitos reservados.
++
++>>>>>>> c37c5d6eedba66d3b621870444acd123f208f052
+\ No newline at end of file
