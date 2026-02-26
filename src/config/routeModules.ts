@@ -53,5 +53,9 @@ export function getRouteModule(pathname: string): ModuleName | null {
     return MODULES.ADMIN;
   }
 
+  if (normalizedPath.startsWith('/equipamento/')) {
+    return MODULES.CADASTROS;
+  }
+
   return routeModules[normalizedPath] ?? null;
 }

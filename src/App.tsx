@@ -41,6 +41,7 @@ import NotFound from "./pages/NotFound";
 import SiteHome from "./pages/SiteHome";
 import SystemPortal from "./pages/SystemPortal";
 import SystemsCatalog from "./pages/SystemsCatalog";
+import EquipamentoPage from "./modules/equipamentos/EquipamentoPage";
 import { PLATFORM_ROUTES } from "@/config/platformArchitecture";
 
 // Admin Portal
@@ -89,6 +90,7 @@ const App = () => (
               <Route path="/melhorias" element={<MelhoriasPage />} />
               <Route path="/hierarquia" element={<Hierarquia />} />
               <Route path="/equipamentos" element={<Equipamentos />} />
+              <Route path="/equipamento/:tag" element={<EquipamentoPage />} />
               <Route path="/mecanicos" element={<Mecanicos />} />
               <Route path="/materiais" element={<Materiais />} />
               <Route path="/fornecedores" element={<Fornecedores />} />

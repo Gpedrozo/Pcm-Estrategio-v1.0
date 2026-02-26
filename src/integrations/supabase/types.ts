@@ -1276,6 +1276,7 @@ export type Database = {
           causa_falha_classificacao:
             | Database["public"]["Enums"]["classificacao_falha"]
             | null
+          componente: string | null
           created_at: string
           custo_estimado: number | null
           data_fechamento: string | null
@@ -1287,10 +1288,12 @@ export type Database = {
           empresa_id: string | null
           equipamento: string
           equipe_planejamento: string | null
+          fotos: Json | null
           funcionamento_validado: boolean | null
           ferramentas_necessarias: string | null
           id: string
           licoes_aprendidas: string | null
+          local: string | null
           modo_falha: string | null
           numero_os: number
           origem_solicitacao_id: string | null
@@ -1317,6 +1320,7 @@ export type Database = {
           causa_falha_classificacao?:
             | Database["public"]["Enums"]["classificacao_falha"]
             | null
+          componente?: string | null
           created_at?: string
           custo_estimado?: number | null
           data_fechamento?: string | null
@@ -1328,10 +1332,12 @@ export type Database = {
           empresa_id?: string | null
           equipamento: string
           equipe_planejamento?: string | null
+          fotos?: Json | null
           funcionamento_validado?: boolean | null
           ferramentas_necessarias?: string | null
           id?: string
           licoes_aprendidas?: string | null
+          local?: string | null
           modo_falha?: string | null
           numero_os?: number
           origem_solicitacao_id?: string | null
@@ -1358,6 +1364,7 @@ export type Database = {
           causa_falha_classificacao?:
             | Database["public"]["Enums"]["classificacao_falha"]
             | null
+          componente?: string | null
           created_at?: string
           custo_estimado?: number | null
           data_fechamento?: string | null
@@ -1369,10 +1376,12 @@ export type Database = {
           empresa_id?: string | null
           equipamento?: string
           equipe_planejamento?: string | null
+          fotos?: Json | null
           funcionamento_validado?: boolean | null
           ferramentas_necessarias?: string | null
           id?: string
           licoes_aprendidas?: string | null
+          local?: string | null
           modo_falha?: string | null
           numero_os?: number
           origem_solicitacao_id?: string | null

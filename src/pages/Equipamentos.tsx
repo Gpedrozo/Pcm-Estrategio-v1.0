@@ -12,9 +12,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, Search, Settings2, Eye, Pencil, Trash2, AlertTriangle, CheckCircle2, XCircle, Activity, Wrench, FileText, GitBranchPlus, BookOpen } from 'lucide-react';
+import { Loader2, Plus, Search, Settings2, Eye, Pencil, AlertTriangle, CheckCircle2, XCircle, Activity, Wrench, FileText, GitBranchPlus, BookOpen, QrCode } from 'lucide-react';
 import ArvoreEstrutural from '@/components/equipamentos/ArvoreEstrutural';
 import ManuaisEquipamento from '@/components/equipamentos/ManuaisEquipamento';
+import GerarQRCode from '@/modules/equipamentos/GerarQRCode';
+import ImprimirEtiqueta from '@/modules/equipamentos/ImprimirEtiqueta';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -52,6 +54,7 @@ export default function Equipamentos() {
   const [filterStatus, setFilterStatus] = useState<string>('TODOS');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selected, setSelected] = useState<Equipamento | null>(null);
   const [form, setForm] = useState(FORM_INITIAL);
@@ -374,12 +377,13 @@ export default function Equipamentos() {
                 </form>
               ) : (
                 <Tabs defaultValue="dados" className="mt-4">
-                  <TabsList className="grid w-full grid-cols-5">
+                  <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="dados">Dados</TabsTrigger>
                     <TabsTrigger value="arvore" className="gap-1"><GitBranchPlus className="h-3.5 w-3.5" />Árvore</TabsTrigger>
                     <TabsTrigger value="manuais" className="gap-1"><BookOpen className="h-3.5 w-3.5" />Manuais</TabsTrigger>
                     <TabsTrigger value="manutencao">Manutenção</TabsTrigger>
                     <TabsTrigger value="info">Info</TabsTrigger>
+                    <TabsTrigger value="qr" className="gap-1"><QrCode className="h-3.5 w-3.5" />QR</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="dados" className="space-y-4 mt-4">
@@ -458,9 +462,33 @@ export default function Equipamentos() {
                       <Switch checked={selected.ativo} onCheckedChange={() => { handleToggleAtivo(selected); setDetailOpen(false); }} />
                     </div>
                   </TabsContent>
+
+                  <TabsContent value="qr" className="space-y-4 mt-4">
+                    <div className="flex justify-end">
+                      <Button variant="outline" className="gap-2" onClick={() => setQrDialogOpen(true)}>
+                        <QrCode className="h-4 w-4" />Gerar / Imprimir QR
+                      </Button>
+                    </div>
+                    <GerarQRCode tag={selected.tag} nome={selected.nome} />
+                  </TabsContent>
                 </Tabs>
               )}
             </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><QrCode className="h-5 w-5" />Etiqueta QR do Equipamento</DialogTitle>
+          </DialogHeader>
+          {selected && (
+            <div className="space-y-6">
+              <GerarQRCode tag={selected.tag} nome={selected.nome} />
+              <Separator />
+              <ImprimirEtiqueta tag={selected.tag} nome={selected.nome} />
+            </div>
           )}
         </DialogContent>
       </Dialog>
