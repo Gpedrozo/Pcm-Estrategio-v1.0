@@ -52,6 +52,7 @@ import AdminAssinaturas from "./pages/admin/AdminAssinaturas";
 import AdminMetricas from "./pages/admin/AdminMetricas";
 import AdminPermissoes from "./pages/admin/AdminPermissoes";
 import AdminConfig from "./pages/admin/AdminConfig";
+import AdminSecurityLogs from "./pages/admin/AdminSecurityLogs";
 
 const queryClient = new QueryClient();
 
@@ -110,6 +111,7 @@ const App = () => (
             <Route path="/gestao/assinaturas" element={<Navigate to="/admin/assinaturas" replace />} />
             <Route path="/gestao/metricas" element={<Navigate to="/admin/metricas" replace />} />
             <Route path="/gestao/permissoes" element={<Navigate to="/admin/permissoes" replace />} />
+            <Route path="/gestao/security-logs" element={<Navigate to="/admin/security-logs" replace />} />
             <Route path="/gestao/config" element={<Navigate to="/admin/config" replace />} />
 
             {/* Portal Admin — MASTER_TI only */}
@@ -121,6 +123,7 @@ const App = () => (
               <Route path="/admin/assinaturas" element={<AdminAssinaturas />} />
               <Route path="/admin/metricas" element={<AdminMetricas />} />
               <Route path="/admin/permissoes" element={<AdminPermissoes />} />
+              <Route path="/admin/security-logs" element={<AdminSecurityLogs />} />
               <Route path="/admin/config" element={<AdminConfig />} />
             </Route>
 

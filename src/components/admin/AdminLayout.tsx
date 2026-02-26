@@ -2,7 +2,7 @@ import { Outlet, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, Building2, Users, CreditCard, FileText,
-  Settings, LogOut, ChevronLeft, Crown, BarChart3, Shield,
+  Settings, LogOut, ChevronLeft, Crown, BarChart3, Shield, ShieldAlert,
   Menu, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ const adminMenu = [
   { title: 'Assinaturas', url: '/admin/assinaturas', icon: FileText },
   { title: 'Métricas', url: '/admin/metricas', icon: BarChart3 },
   { title: 'Permissões', url: '/admin/permissoes', icon: Shield },
+  { title: 'Logs Segurança', url: '/admin/security-logs', icon: ShieldAlert },
   { title: 'Configurações', url: '/admin/config', icon: Settings },
 ];
 
