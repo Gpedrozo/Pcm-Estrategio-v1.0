@@ -199,9 +199,6 @@ export function AppSidebar() {
             <LogOut className="h-5 w-5" />
           </button>
         </div>
-        <div className="flex items-center justify-center pt-2 border-t border-sidebar-border/50">
-          <img src={gppisLogo} alt="GPPIS Industrial Systems" className="h-6 w-auto opacity-60" />
-        </div>
       </SidebarFooter>
     </Sidebar>
   );
