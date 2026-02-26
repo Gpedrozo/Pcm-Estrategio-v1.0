@@ -17,6 +17,60 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 
 const COLORS = ['hsl(199,89%,48%)', 'hsl(142,72%,29%)', 'hsl(38,92%,50%)', 'hsl(0,72%,51%)', 'hsl(213,56%,24%)'];
 
+const DEFAULT_PRIMARY_HSL = '213 56% 24%';
+const DEFAULT_SECONDARY_HSL = '210 14% 89%';
+
+function hslTripletToHex(hslTriplet: string): string {
+  const [hRaw, sRaw, lRaw] = hslTriplet.split(' ');
+  const h = Number(hRaw);
+  const s = Number((sRaw || '').replace('%', '')) / 100;
+  const l = Number((lRaw || '').replace('%', '')) / 100;
+
+  if (Number.isNaN(h) || Number.isNaN(s) || Number.isNaN(l)) return '#1e3a8a';
+
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+
+  if (h >= 0 && h < 60) { r = c; g = x; b = 0; }
+  else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; }
+  else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; }
+  else { r = c; g = 0; b = x; }
+
+  const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function hexToHslTriplet(hex: string): string {
+  const sanitized = hex.replace('#', '');
+  if (sanitized.length !== 6) return DEFAULT_PRIMARY_HSL;
+
+  const r = parseInt(sanitized.substring(0, 2), 16) / 255;
+  const g = parseInt(sanitized.substring(2, 4), 16) / 255;
+  const b = parseInt(sanitized.substring(4, 6), 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  let h = 0;
+  if (delta !== 0) {
+    if (max === r) h = ((g - b) / delta) % 6;
+    else if (max === g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+  }
+  h = Math.round(h * 60);
+  if (h < 0) h += 360;
+
+  const l = (max + min) / 2;
+  const s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+
+  return `${h} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
 export default function AdminEmpresas() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -27,7 +81,15 @@ export default function AdminEmpresas() {
   const [editing, setEditing] = useState<any>(null);
   const [selectedEmpresa, setSelectedEmpresa] = useState<any>(null);
   const [empresaMetrics, setEmpresaMetrics] = useState<any>(null);
-  const [form, setForm] = useState({ nome: '', cnpj: '', plano: 'BASICO' });
+  const [form, setForm] = useState({
+    nome: '',
+    cnpj: '',
+    plano: 'BASICO',
+    nome_sistema: 'PCM ESTRATÉGICO',
+    logo_url: '',
+    cor_primaria: DEFAULT_PRIMARY_HSL,
+    cor_secundaria: DEFAULT_SECONDARY_HSL,
+  });
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -50,12 +112,44 @@ export default function AdminEmpresas() {
 
   useEffect(() => { load(); }, [load]);
 
-  const openNew = () => { setEditing(null); setForm({ nome: '', cnpj: '', plano: 'BASICO' }); setDialog(true); };
-  const openEdit = (e: any) => { setEditing(e); setForm({ nome: e.nome, cnpj: e.cnpj || '', plano: e.plano }); setDialog(true); };
+  const openNew = () => {
+    setEditing(null);
+    setForm({
+      nome: '',
+      cnpj: '',
+      plano: 'BASICO',
+      nome_sistema: 'PCM ESTRATÉGICO',
+      logo_url: '',
+      cor_primaria: DEFAULT_PRIMARY_HSL,
+      cor_secundaria: DEFAULT_SECONDARY_HSL,
+    });
+    setDialog(true);
+  };
+  const openEdit = (e: any) => {
+    setEditing(e);
+    setForm({
+      nome: e.nome,
+      cnpj: e.cnpj || '',
+      plano: e.plano,
+      nome_sistema: e.nome_sistema || 'PCM ESTRATÉGICO',
+      logo_url: e.logo_url || '',
+      cor_primaria: e.cor_primaria || DEFAULT_PRIMARY_HSL,
+      cor_secundaria: e.cor_secundaria || DEFAULT_SECONDARY_HSL,
+    });
+    setDialog(true);
+  };
 
   const save = async () => {
     if (!form.nome.trim()) { toast({ title: 'Nome obrigatório', variant: 'destructive' }); return; }
-    const data = { nome: form.nome, cnpj: form.cnpj || null, plano: form.plano };
+    const data = {
+      nome: form.nome,
+      cnpj: form.cnpj || null,
+      plano: form.plano,
+      nome_sistema: form.nome_sistema || 'PCM ESTRATÉGICO',
+      logo_url: form.logo_url || null,
+      cor_primaria: form.cor_primaria || DEFAULT_PRIMARY_HSL,
+      cor_secundaria: form.cor_secundaria || DEFAULT_SECONDARY_HSL,
+    };
     if (editing) {
       await supabase.from('empresas').update(data).eq('id', editing.id);
       toast({ title: 'Empresa atualizada' });
@@ -179,6 +273,50 @@ export default function AdminEmpresas() {
           <div className="space-y-4">
             <div><Label>Nome *</Label><Input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} /></div>
             <div><Label>CNPJ</Label><Input value={form.cnpj} onChange={e => setForm(f => ({ ...f, cnpj: e.target.value }))} placeholder="00.000.000/0000-00" /></div>
+            <div><Label>Nome do Sistema</Label><Input value={form.nome_sistema} onChange={e => setForm(f => ({ ...f, nome_sistema: e.target.value }))} placeholder="Ex: PCM Estratégico" /></div>
+            <div><Label>URL da Logomarca</Label><Input value={form.logo_url} onChange={e => setForm(f => ({ ...f, logo_url: e.target.value }))} placeholder="https://..." /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Cor Primária</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    type="color"
+                    value={hslTripletToHex(form.cor_primaria || DEFAULT_PRIMARY_HSL)}
+                    onChange={e => setForm(f => ({ ...f, cor_primaria: hexToHslTriplet(e.target.value) }))}
+                    className="h-10 w-16 p-1"
+                  />
+                  <Input value={form.cor_primaria} onChange={e => setForm(f => ({ ...f, cor_primaria: e.target.value }))} placeholder="213 56% 24%" />
+                </div>
+              </div>
+              <div>
+                <Label>Cor Secundária</Label>
+                <div className="flex items-center gap-2 mt-1">
+                  <Input
+                    type="color"
+                    value={hslTripletToHex(form.cor_secundaria || DEFAULT_SECONDARY_HSL)}
+                    onChange={e => setForm(f => ({ ...f, cor_secundaria: hexToHslTriplet(e.target.value) }))}
+                    className="h-10 w-16 p-1"
+                  />
+                  <Input value={form.cor_secundaria} onChange={e => setForm(f => ({ ...f, cor_secundaria: e.target.value }))} placeholder="210 14% 89%" />
+                </div>
+              </div>
+            </div>
+            <div className="rounded-md border border-border p-3 space-y-2">
+              <p className="text-xs text-muted-foreground uppercase">Preview</p>
+              <div className="rounded-md p-3" style={{ background: `hsl(${form.cor_secundaria || DEFAULT_SECONDARY_HSL})` }}>
+                <div className="flex items-center gap-3">
+                  {form.logo_url ? (
+                    <img src={form.logo_url} alt="logo" className="h-8 w-auto rounded" />
+                  ) : (
+                    <div className="h-8 w-8 rounded" style={{ background: `hsl(${form.cor_primaria || DEFAULT_PRIMARY_HSL})` }} />
+                  )}
+                  <div>
+                    <p className="font-semibold" style={{ color: `hsl(${form.cor_primaria || DEFAULT_PRIMARY_HSL})` }}>{form.nome_sistema || 'PCM ESTRATÉGICO'}</p>
+                    <p className="text-xs text-muted-foreground">Sistema de Manutenção</p>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div><Label>Plano</Label>
               <Select value={form.plano} onValueChange={v => setForm(f => ({ ...f, plano: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>

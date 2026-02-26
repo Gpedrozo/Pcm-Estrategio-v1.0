@@ -8,6 +8,9 @@ interface Empresa {
   nome: string;
   cnpj: string | null;
   logo_url: string | null;
+  nome_sistema: string;
+  cor_primaria: string;
+  cor_secundaria: string;
   plano: string;
   ativo: boolean;
 }
@@ -37,11 +40,35 @@ export function EmpresaProvider({ children }: { children: React.ReactNode }) {
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const resetTemaPadrao = useCallback(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--primary', '213 56% 24%');
+    root.style.setProperty('--secondary', '210 14% 89%');
+    root.style.setProperty('--sidebar-primary', '199 89% 48%');
+    root.style.setProperty('--sidebar-accent', '215 25% 25%');
+    document.title = 'PCM ESTRATÉGICO';
+  }, []);
+
+  const aplicarTemaEmpresa = useCallback((empresaAtual: Empresa | null) => {
+    if (!empresaAtual) {
+      resetTemaPadrao();
+      return;
+    }
+
+    const root = document.documentElement;
+    root.style.setProperty('--primary', empresaAtual.cor_primaria || '213 56% 24%');
+    root.style.setProperty('--secondary', empresaAtual.cor_secundaria || '210 14% 89%');
+    root.style.setProperty('--sidebar-primary', empresaAtual.cor_primaria || '199 89% 48%');
+    root.style.setProperty('--sidebar-accent', empresaAtual.cor_secundaria || '215 25% 25%');
+    document.title = empresaAtual.nome_sistema || 'PCM ESTRATÉGICO';
+  }, [resetTemaPadrao]);
+
   useEffect(() => {
     if (!isAuthenticated || !user) {
       setEmpresa(null);
       setAssinatura(null);
       setIsLoading(false);
+      resetTemaPadrao();
       return;
     }
 
@@ -100,6 +127,10 @@ export function EmpresaProvider({ children }: { children: React.ReactNode }) {
 
     loadEmpresa();
   }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    aplicarTemaEmpresa(empresa);
+  }, [empresa, aplicarTemaEmpresa]);
 
   const modulosAtivosNormalizados = useMemo(
     () => normalizeModuleList(assinatura?.modulos_ativos),

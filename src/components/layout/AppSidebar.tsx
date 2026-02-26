@@ -89,7 +89,7 @@ const menuGroups: MenuGroup[] = [
 
 export function AppSidebar() {
   const { user, logout, isAdmin } = useAuth();
-  const { moduloAtivo } = useEmpresa();
+  const { moduloAtivo, empresa } = useEmpresa();
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
@@ -125,9 +125,9 @@ export function AppSidebar() {
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex flex-col items-center text-center gap-2">
-          <img src={gppisLogo} alt="GPPIS Industrial Systems" className="h-10 w-auto" />
+          <img src={empresa?.logo_url || gppisLogo} alt={empresa?.nome_sistema || 'GPPIS Industrial Systems'} className="h-10 w-auto" />
           <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground leading-tight">PCM ESTRATÉGICO</h1>
+            <h1 className="text-lg font-bold text-sidebar-foreground leading-tight">{empresa?.nome_sistema || 'PCM ESTRATÉGICO'}</h1>
             <p className="text-xs text-sidebar-foreground/60 mt-1">Sistema de Manutenção</p>
           </div>
         </div>

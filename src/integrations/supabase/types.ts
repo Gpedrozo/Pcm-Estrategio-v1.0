@@ -423,31 +423,40 @@ export type Database = {
       empresas: {
         Row: {
           ativo: boolean
+          cor_primaria: string
+          cor_secundaria: string
           cnpj: string | null
           created_at: string
           id: string
           logo_url: string | null
           nome: string
+          nome_sistema: string
           plano: string
           updated_at: string
         }
         Insert: {
           ativo?: boolean
+          cor_primaria?: string
+          cor_secundaria?: string
           cnpj?: string | null
           created_at?: string
           id?: string
           logo_url?: string | null
           nome: string
+          nome_sistema?: string
           plano?: string
           updated_at?: string
         }
         Update: {
           ativo?: boolean
+          cor_primaria?: string
+          cor_secundaria?: string
           cnpj?: string | null
           created_at?: string
           id?: string
           logo_url?: string | null
           nome?: string
+          nome_sistema?: string
           plano?: string
           updated_at?: string
         }
