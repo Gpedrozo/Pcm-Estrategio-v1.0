@@ -1374,6 +1374,227 @@ export type Database = {
           },
         ]
       }
+      configuracoes_sistema: {
+        Row: {
+          categoria: string | null
+          chave: string
+          created_at: string
+          descricao: string | null
+          editavel: boolean
+          empresa_id: string | null
+          id: string
+          tipo: string
+          updated_at: string
+          valor: Json
+        }
+        Insert: {
+          categoria?: string | null
+          chave: string
+          created_at?: string
+          descricao?: string | null
+          editavel?: boolean
+          empresa_id?: string | null
+          id?: string
+          tipo?: string
+          updated_at?: string
+          valor?: Json
+        }
+        Update: {
+          categoria?: string | null
+          chave?: string
+          created_at?: string
+          descricao?: string | null
+          editavel?: boolean
+          empresa_id?: string | null
+          id?: string
+          tipo?: string
+          updated_at?: string
+          valor?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_sistema_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permissoes_granulares: {
+        Row: {
+          acessar_historico: boolean
+          acessar_indicadores: boolean
+          alterar_status: boolean
+          created_at: string
+          criar: boolean
+          editar: boolean
+          empresa_id: string | null
+          excluir: boolean
+          exportar: boolean
+          id: string
+          importar: boolean
+          imprimir: boolean
+          modulo: string
+          updated_at: string
+          user_id: string
+          ver_criticidade: boolean
+          ver_custos: boolean
+          ver_dados_financeiros: boolean
+          ver_obs_internas: boolean
+          ver_status: boolean
+          ver_valores: boolean
+          visualizar: boolean
+        }
+        Insert: {
+          acessar_historico?: boolean
+          acessar_indicadores?: boolean
+          alterar_status?: boolean
+          created_at?: string
+          criar?: boolean
+          editar?: boolean
+          empresa_id?: string | null
+          excluir?: boolean
+          exportar?: boolean
+          id?: string
+          importar?: boolean
+          imprimir?: boolean
+          modulo: string
+          updated_at?: string
+          user_id: string
+          ver_criticidade?: boolean
+          ver_custos?: boolean
+          ver_dados_financeiros?: boolean
+          ver_obs_internas?: boolean
+          ver_status?: boolean
+          ver_valores?: boolean
+          visualizar?: boolean
+        }
+        Update: {
+          acessar_historico?: boolean
+          acessar_indicadores?: boolean
+          alterar_status?: boolean
+          created_at?: string
+          criar?: boolean
+          editar?: boolean
+          empresa_id?: string | null
+          excluir?: boolean
+          exportar?: boolean
+          id?: string
+          importar?: boolean
+          imprimir?: boolean
+          modulo?: string
+          updated_at?: string
+          user_id?: string
+          ver_criticidade?: boolean
+          ver_custos?: boolean
+          ver_dados_financeiros?: boolean
+          ver_obs_internas?: boolean
+          ver_status?: boolean
+          ver_valores?: boolean
+          visualizar?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permissoes_granulares_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rate_limits: {
+        Row: {
+          created_at: string
+          empresa_id: string | null
+          endpoint: string
+          id: string
+          request_count: number
+          updated_at: string
+          user_id: string | null
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id?: string | null
+          endpoint: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          user_id?: string | null
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string | null
+          endpoint?: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          user_id?: string | null
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rate_limits_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_logs: {
+        Row: {
+          action: string
+          created_at: string
+          empresa_id: string | null
+          error_message: string | null
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          resource: string
+          resource_id: string | null
+          success: boolean
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          empresa_id?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resource: string
+          resource_id?: string | null
+          success?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          empresa_id?: string | null
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resource?: string
+          resource_id?: string | null
+          success?: boolean
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_logs_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       solicitacoes: {
         Row: {
           created_at: string
@@ -1521,6 +1742,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          p_endpoint: string
+          p_max_requests?: number
+          p_window_seconds?: number
+        }
+        Returns: boolean
+      }
+      cleanup_rate_limits: { Args: never; Returns: undefined }
       get_user_empresa_id: { Args: never; Returns: string }
       has_role: {
         Args: {

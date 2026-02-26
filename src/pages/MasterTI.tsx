@@ -80,6 +80,15 @@ export default function MasterTI() {
   const [tableStats, setTableStats] = useState<Array<{ table: string; total: number }>>([]);
   const [auditRows, setAuditRows] = useState<AuditoriaRow[]>([]);
   const [loadingAudit, setLoadingAudit] = useState(false);
+  const [securityOverview, setSecurityOverview] = useState({
+    available: true,
+    securityLogs: 0,
+    failedEvents24h: 0,
+    rateLimits24h: 0,
+    permissoes: 0,
+    configuracoes: 0,
+    modulosComPermissao: 0,
+  });
 
   // Forms
   const [formEmpresa, setFormEmpresa] = useState({ nome: '', cnpj: '', plano: 'BASICO' });
@@ -130,9 +139,35 @@ export default function MasterTI() {
     setLoadingAudit(false);
   }, []);
 
+  const loadSecurityOverview = useCallback(async () => {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const [logsRes, failedRes, rateRes, permCountRes, permRowsRes, cfgRes] = await Promise.all([
+      supabase.from('security_logs').select('id', { count: 'exact', head: true }),
+      supabase.from('security_logs').select('id', { count: 'exact', head: true }).eq('success', false).gte('created_at', oneDayAgo),
+      supabase.from('rate_limits').select('id', { count: 'exact', head: true }).gte('window_start', oneDayAgo),
+      supabase.from('permissoes_granulares').select('id', { count: 'exact', head: true }),
+      supabase.from('permissoes_granulares').select('modulo'),
+      supabase.from('configuracoes_sistema').select('id', { count: 'exact', head: true }),
+    ]);
+
+    const hasError = Boolean(logsRes.error || failedRes.error || rateRes.error || permCountRes.error || permRowsRes.error || cfgRes.error);
+    const modulosComPermissao = new Set((permRowsRes.data || []).map((r: any) => r.modulo)).size;
+
+    setSecurityOverview({
+      available: !hasError,
+      securityLogs: logsRes.count || 0,
+      failedEvents24h: failedRes.count || 0,
+      rateLimits24h: rateRes.count || 0,
+      permissoes: permCountRes.count || 0,
+      configuracoes: cfgRes.count || 0,
+      modulosComPermissao,
+    });
+  }, []);
+
   useEffect(() => { loadAll(); }, [loadAll]);
   useEffect(() => { loadMonitoramento(); }, [loadMonitoramento]);
   useEffect(() => { loadAuditoria(); }, [loadAuditoria]);
+  useEffect(() => { loadSecurityOverview(); }, [loadSecurityOverview]);
 
   // ─── Empresa CRUD ───────────────────────────────────
   const openNewEmpresa = () => { setEditingEmpresa(null); setFormEmpresa({ nome: '', cnpj: '', plano: 'BASICO' }); setEmpresaDialog(true); };
@@ -433,29 +468,34 @@ export default function MasterTI() {
               <div className="flex justify-between"><span>ADMIN</span><span className="font-bold text-primary">{securityStats.admin}</span></div>
               <div className="flex justify-between"><span>USUARIO</span><span className="font-bold">{securityStats.usuario}</span></div>
             </CardContent></Card>
-            <Card><CardHeader><CardTitle className="text-base">Controles Ativos</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
+            <Card><CardHeader><CardTitle className="text-base">Eventos de Segurança</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
+              <div className="flex items-center justify-between"><span>Total security logs</span><span className="font-bold">{securityOverview.securityLogs}</span></div>
+              <div className="flex items-center justify-between"><span>Falhas (24h)</span><span className="font-bold text-destructive">{securityOverview.failedEvents24h}</span></div>
+              <div className="flex items-center justify-between"><span>Rate limit (24h)</span><span className="font-bold text-warning">{securityOverview.rateLimits24h}</span></div>
+            </CardContent></Card>
+            <Card><CardHeader><CardTitle className="text-base">Controles Ativos</CardTitle></CardHeader><CardContent className="text-sm space-y-2">
               <div className="flex items-center justify-between"><span>RLS por empresa</span><Badge>Ativo</Badge></div>
               <div className="flex items-center justify-between"><span>Auditoria automática DB</span><Badge>Ativo</Badge></div>
-              <div className="flex items-center justify-between"><span>Segregação por role</span><Badge>Ativo</Badge></div>
-            </CardContent></Card>
-            <Card><CardHeader><CardTitle className="text-base">Observações</CardTitle></CardHeader><CardContent className="text-sm text-muted-foreground space-y-2">
-              <p>Esta versão não possui tabelas dedicadas de <strong>security_logs</strong> e <strong>rate_limits</strong>.</p>
-              <p>O controle de segurança está baseado em RLS, roles e auditoria centralizada.</p>
+              <div className="flex items-center justify-between"><span>Logs de segurança</span><Badge variant={securityOverview.available ? 'default' : 'destructive'}>{securityOverview.available ? 'Ativo' : 'Pendente migration'}</Badge></div>
             </CardContent></Card>
           </div>
         </TabsContent>
 
         <TabsContent value="permissoes">
-          <Card><CardHeader><CardTitle className="text-lg">Permissões Granulares</CardTitle></CardHeader><CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>O gerenciamento detalhado de permissões foi centralizado no portal administrativo desta versão.</p>
-            <p>Use o menu de administração para configuração de módulos por plano e acesso por perfil.</p>
+          <Card><CardHeader><CardTitle className="text-lg">Permissões Granulares</CardTitle></CardHeader><CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-md border p-3"><p className="text-xs text-muted-foreground">Regras cadastradas</p><p className="text-2xl font-bold">{securityOverview.permissoes}</p></div>
+              <div className="rounded-md border p-3"><p className="text-xs text-muted-foreground">Módulos com regra</p><p className="text-2xl font-bold">{securityOverview.modulosComPermissao}</p></div>
+              <div className="rounded-md border p-3"><p className="text-xs text-muted-foreground">Configurações globais</p><p className="text-2xl font-bold">{securityOverview.configuracoes}</p></div>
+            </div>
+            <p className="text-sm text-muted-foreground">As regras detalhadas por usuário e módulo podem ser administradas via tabelas de segurança e pelo painel administrativo global.</p>
           </CardContent></Card>
         </TabsContent>
 
         <TabsContent value="configuracoes">
           <Card><CardHeader><CardTitle className="text-lg">Configurações Globais</CardTitle></CardHeader><CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Esta base não possui tabela dedicada de configurações globais equivalente ao repositório de referência.</p>
-            <p>As configurações operacionais estão distribuídas em planos, empresas e parâmetros dos módulos.</p>
+            <p>Tabela dedicada disponível: <strong>configuracoes_sistema</strong>.</p>
+            <p>Total atual de configurações: <strong>{securityOverview.configuracoes}</strong>.</p>
           </CardContent></Card>
         </TabsContent>
 
