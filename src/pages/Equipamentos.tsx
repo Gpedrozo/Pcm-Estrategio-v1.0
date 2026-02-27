@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -19,6 +20,8 @@ import ManuaisAtivoDialog from '@/modules/equipamentos/ManuaisAtivoDialog';
 
 type Criticidade = Database['public']['Enums']['criticidade_abc'];
 type NivelRisco = Database['public']['Enums']['nivel_risco'];
+type EquipamentoInsert = Database['public']['Tables']['equipamentos']['Insert'];
+type OrdemServicoTag = Pick<Database['public']['Tables']['ordens_servico']['Row'], 'tag'>;
 
 interface Equipamento {
   id: string;
@@ -62,26 +65,68 @@ export default function Equipamentos() {
   const [editTreeOpen, setEditTreeOpen] = useState(false);
   const [manuaisOpen, setManuaisOpen] = useState(false);
   const [selected, setSelected] = useState<Equipamento | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Equipamento | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [form, setForm] = useState(FORM_INITIAL);
   const [osCount, setOsCount] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 20;
 
   useEffect(() => {
     load();
-  }, [fromEmpresa]);
+  }, [fromEmpresa, search, filterCriticidade, filterStatus, page, empresaId]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterCriticidade, filterStatus]);
 
   async function load() {
     setIsLoading(true);
-    const { data } = await fromEmpresa('equipamentos').order('tag');
-    setItems((data as Equipamento[]) || []);
+    const rangeStart = (page - 1) * pageSize;
+    const rangeEnd = rangeStart + pageSize - 1;
 
-    const { data: osData } = await fromEmpresa('ordens_servico').select('tag');
-    if (osData) {
+    let query = supabase
+      .from('equipamentos')
+      .select('*', { count: 'exact' })
+      .order('tag')
+      .range(rangeStart, rangeEnd);
+
+    if (empresaId) query = query.eq('empresa_id', empresaId);
+
+    if (search) {
+      query = query.or(`tag.ilike.%${search}%,nome.ilike.%${search}%,fabricante.ilike.%${search}%`);
+    }
+
+    if (filterCriticidade !== 'TODOS') {
+      query = query.eq('criticidade', filterCriticidade as Criticidade);
+    }
+
+    if (filterStatus === 'ATIVO') {
+      query = query.eq('ativo', true);
+    } else if (filterStatus === 'INATIVO') {
+      query = query.eq('ativo', false);
+    }
+
+    const { data, count } = await query;
+    const loadedItems = (data as Equipamento[]) || [];
+    setItems(loadedItems);
+    setTotalCount(count || 0);
+
+    const tags = loadedItems.map((equipamento) => equipamento.tag).filter(Boolean);
+    if (tags.length) {
+      let osQuery = supabase.from('ordens_servico').select('tag').in('tag', tags);
+      if (empresaId) osQuery = osQuery.eq('empresa_id', empresaId);
+      const { data: osData } = await osQuery;
       const counts: Record<string, number> = {};
-      osData.forEach((os: any) => {
+      ((osData || []) as OrdemServicoTag[]).forEach((os) => {
+        if (!os.tag) return;
         counts[os.tag] = (counts[os.tag] || 0) + 1;
       });
       setOsCount(counts);
+    } else {
+      setOsCount({});
     }
 
     setIsLoading(false);
@@ -91,7 +136,7 @@ export default function Equipamentos() {
     e.preventDefault();
     setSaving(true);
 
-    const payload: any = { ...form };
+    const payload: EquipamentoInsert = { ...form };
     if (!payload.data_instalacao) delete payload.data_instalacao;
     if (!payload.numero_serie) delete payload.numero_serie;
 
@@ -110,9 +155,7 @@ export default function Equipamentos() {
   };
 
   const handleDelete = async (equip: Equipamento) => {
-    if (!confirm(`Excluir o ativo ${equip.tag} - ${equip.nome}?`)) return;
-
-    let query = supabase.from('equipamentos').delete().eq('id', equip.id);
+    let query = supabase.from('equipamentos').update({ ativo: false }).eq('id', equip.id);
     if (empresaId) query = query.eq('empresa_id', empresaId);
 
     const { error } = await query;
@@ -121,7 +164,18 @@ export default function Equipamentos() {
       return;
     }
 
-    toast({ title: 'Ativo excluído com sucesso!' });
+    toast({ title: 'Ativo inativado com sucesso!' });
+
+    await supabase.from('system_logs').insert({
+      empresa_id: empresaId,
+      level: 'INFO',
+      event: 'ATIVO_SOFT_DELETE',
+      message: `Ativo ${equip.tag} inativado por ação do usuário.`,
+      metadata: { equipamento_id: equip.id, tag: equip.tag },
+    });
+
+    setDeleteTarget(null);
+    setDeleteDialogOpen(false);
     load();
   };
 
@@ -145,15 +199,7 @@ export default function Equipamentos() {
     setManuaisOpen(true);
   };
 
-  const filtered = items.filter((i) => {
-    const matchSearch = !search ||
-      i.tag?.toLowerCase().includes(search.toLowerCase()) ||
-      i.nome?.toLowerCase().includes(search.toLowerCase()) ||
-      i.fabricante?.toLowerCase().includes(search.toLowerCase());
-    const matchCrit = filterCriticidade === 'TODOS' || i.criticidade === filterCriticidade;
-    const matchStatus = filterStatus === 'TODOS' || (filterStatus === 'ATIVO' ? i.ativo : !i.ativo);
-    return matchSearch && matchCrit && matchStatus;
-  });
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const stats = {
     total: items.length,
@@ -259,7 +305,7 @@ export default function Equipamentos() {
               </SelectContent>
             </Select>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">{filtered.length} equipamento(s) encontrado(s)</p>
+          <p className="text-xs text-muted-foreground mt-2">{totalCount} equipamento(s) encontrado(s)</p>
         </CardContent>
       </Card>
 
@@ -281,7 +327,7 @@ export default function Equipamentos() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((e) => (
+                {items.map((e) => (
                   <tr key={e.id} className="hover:bg-muted/50">
                     <td className="font-mono font-bold text-primary">{e.tag}</td>
                     <td className="font-medium">{e.nome}</td>
@@ -355,7 +401,7 @@ export default function Equipamentos() {
                               variant="ghost"
                               size="icon"
                               className="action-icon-btn text-destructive"
-                              onClick={() => handleDelete(e)}
+                              onClick={() => { setDeleteTarget(e); setDeleteDialogOpen(true); }}
                             >
                               <Trash2 className="h-5 w-5" />
                             </Button>
@@ -366,7 +412,7 @@ export default function Equipamentos() {
                     </td>
                   </tr>
                 ))}
-                {filtered.length === 0 && (
+                {items.length === 0 && (
                   <tr><td colSpan={9} className="text-center py-12 text-muted-foreground">Nenhum equipamento encontrado</td></tr>
                 )}
               </tbody>
@@ -374,6 +420,20 @@ export default function Equipamentos() {
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Página {page} de {totalPages}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((prev) => Math.max(1, prev - 1))}>
+            Anterior
+          </Button>
+          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}>
+            Próxima
+          </Button>
+        </div>
+      </div>
 
       <VisualizarAtivoDialog open={viewOpen} onOpenChange={setViewOpen} equipamento={selected} />
 
@@ -395,6 +455,25 @@ export default function Equipamentos() {
         onOpenChange={setManuaisOpen}
         equipamento={selected}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Inativar ativo</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget
+                ? `O ativo ${deleteTarget.tag} - ${deleteTarget.nome} será inativado e não aparecerá nas listagens de ativos.`
+                : 'Confirma a inativação deste ativo?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteTarget && handleDelete(deleteTarget)}>
+              Confirmar inativação
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

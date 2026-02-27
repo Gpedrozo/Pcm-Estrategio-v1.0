@@ -69,6 +69,7 @@ const ssmaMenuItems: MenuItem[] = [
 const adminMenuItems: MenuItem[] = [
   { title: 'Usuários', url: '/usuarios', icon: Users },
   { title: 'Auditoria', url: '/auditoria', icon: ClipboardList },
+  { title: 'System Health', url: '/system-health', icon: Shield },
 ];
 
 interface MenuGroup {

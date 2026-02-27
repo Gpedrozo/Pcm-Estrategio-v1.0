@@ -41,6 +41,7 @@ import NotFound from "./pages/NotFound";
 import SiteHome from "./pages/SiteHome";
 import SystemPortal from "./pages/SystemPortal";
 import SystemsCatalog from "./pages/SystemsCatalog";
+import SystemHealth from "./pages/SystemHealth";
 import EquipamentoPage from "./modules/equipamentos/EquipamentoPage";
 import { PLATFORM_ROUTES } from "@/config/platformArchitecture";
 
@@ -103,6 +104,7 @@ const App = () => (
               <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/auditoria" element={<Auditoria />} />
               <Route path="/analise-ia" element={<AnaliseIA />} />
+              <Route path="/system-health" element={<SystemHealth />} />
               <Route path="/master-ti" element={<Navigate to={PLATFORM_ROUTES.adminGlobal} replace />} />
             </Route>
 

@@ -13,6 +13,7 @@ export function useIndicadores() {
 
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
       const osAbertas = ordens.filter(os => os.status === 'ABERTA').length;
       const osEmAndamento = ordens.filter(os =>
@@ -37,9 +38,14 @@ export function useIndicadores() {
       const backlogTempo = backlogOrdens.reduce((acc, os) => acc + (os.tempo_estimado || 0), 0) / 60;
       const backlogSemanas = backlogTempo / 40;
 
-      const custoMaoObraMes = execucoes.reduce((acc, ex) => acc + (Number(ex.custo_mao_obra) || 0), 0);
-      const custoMateriaisMes = execucoes.reduce((acc, ex) => acc + (Number(ex.custo_materiais) || 0), 0);
-      const custoTerceirosMes = execucoes.reduce((acc, ex) => acc + (Number(ex.custo_terceiros) || 0), 0);
+      const execucoesMes = execucoes.filter((ex) => {
+        const dataExecucao = new Date(ex.data_execucao);
+        return dataExecucao >= startOfMonth && dataExecucao < endOfMonth;
+      });
+
+      const custoMaoObraMes = execucoesMes.reduce((acc, ex) => acc + (Number(ex.custo_mao_obra) || 0), 0);
+      const custoMateriaisMes = execucoesMes.reduce((acc, ex) => acc + (Number(ex.custo_materiais) || 0), 0);
+      const custoTerceirosMes = execucoesMes.reduce((acc, ex) => acc + (Number(ex.custo_terceiros) || 0), 0);
       const custoTotalMes = custoMaoObraMes + custoMateriaisMes + custoTerceirosMes;
 
       const closedWithExec = execucoes.filter(ex => (ex.tempo_execucao || 0) > 0);

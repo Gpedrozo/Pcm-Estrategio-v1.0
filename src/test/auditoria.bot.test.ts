@@ -30,6 +30,7 @@ const appLayoutRoutes = [
   '/ssma',
   '/usuarios',
   '/auditoria',
+  '/system-health',
   '/analise-ia',
 ];
 
@@ -61,6 +62,7 @@ const expectedModuleByRoute: Record<string, string> = {
   '/ssma': MODULES.SSMA,
   '/usuarios': MODULES.ADMIN,
   '/auditoria': MODULES.ADMIN,
+  '/system-health': MODULES.ADMIN,
   '/analise-ia': MODULES.ANALISE_IA,
 };
 
@@ -95,5 +97,12 @@ describe('BOT de Auditoria - Rotas e Permissões', () => {
   it('deve manter regras de perfil consistentes com UX (SOLICITANTE restrito)', () => {
     const allowedSolicitantePaths = ['/dashboard', '/solicitacoes'];
     expect(allowedSolicitantePaths).toEqual(['/dashboard', '/solicitacoes']);
+  });
+
+  it('deve manter etapas críticas do fluxo de manutenção mapeadas em rotas', () => {
+    const fluxoCritico = ['/equipamentos', '/os/nova', '/os/fechar', '/os/historico'];
+    for (const rota of fluxoCritico) {
+      expect(getRouteModule(rota)).not.toBeNull();
+    }
   });
 });

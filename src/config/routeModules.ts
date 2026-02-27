@@ -34,6 +34,7 @@ export const routeModules: Record<string, ModuleName> = {
 
   '/usuarios': MODULES.ADMIN,
   '/auditoria': MODULES.ADMIN,
+  '/system-health': MODULES.ADMIN,
   '/master-ti': MODULES.MASTER_TI,
 
   '/admin': MODULES.ADMIN,

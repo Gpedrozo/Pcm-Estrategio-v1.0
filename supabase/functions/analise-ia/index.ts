@@ -17,15 +17,78 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY não configurada");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const authHeader = req.headers.get("Authorization") || "";
 
-    const { empresa_id, modo = "top-problemas", tag, data_inicio, data_fim } = await req.json();
-    if (!empresa_id) throw new Error("empresa_id é obrigatório");
+    if (!authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Token de autenticação ausente." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: {
+        headers: {
+          Authorization: authHeader,
+        },
+      },
+    });
+
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const logSystem = async (level: string, event: string, message: string, metadata?: Record<string, unknown>) => {
+      await supabaseAdmin.from("system_logs").insert({
+        empresa_id: profile?.empresa_id ?? null,
+        user_id: user?.id ?? null,
+        level,
+        event,
+        message,
+        metadata: metadata ?? {},
+      });
+    };
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseAuth.auth.getUser();
+
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Usuário não autenticado." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("empresa_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError || !profile?.empresa_id) {
+      await supabaseAdmin.from("system_logs").insert({
+        empresa_id: null,
+        user_id: user.id,
+        level: "ERROR",
+        event: "IA_ANALISE_TENANCY_DENIED",
+        message: "Empresa do usuário não identificada para análise IA.",
+        metadata: { user_id: user.id },
+      });
+      return new Response(JSON.stringify({ error: "Empresa do usuário não identificada." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const empresaId = profile.empresa_id;
+
+    const { modo = "top-problemas", tag, data_inicio, data_fim } = await req.json();
 
     // Build queries based on mode
-    let osQuery = supabase.from("ordens_servico").select("*").eq("empresa_id", empresa_id).order("created_at", { ascending: false });
-    let execQuery = supabase.from("execucoes_os").select("*").eq("empresa_id", empresa_id).order("created_at", { ascending: false });
+    let osQuery = supabaseAdmin.from("ordens_servico").select("*").eq("empresa_id", empresaId).order("created_at", { ascending: false });
+    let execQuery = supabaseAdmin.from("execucoes_os").select("*").eq("empresa_id", empresaId).order("created_at", { ascending: false });
 
     if (modo === "equipamento" && tag) {
       osQuery = osQuery.eq("tag", tag);
@@ -39,11 +102,11 @@ serve(async (req) => {
 
     const [osRes, equipRes, execRes, prevRes, lubRes, fmeaRes] = await Promise.all([
       osQuery.limit(300),
-      supabase.from("equipamentos").select("*").eq("empresa_id", empresa_id).eq("ativo", true),
+      supabaseAdmin.from("equipamentos").select("*").eq("empresa_id", empresaId).eq("ativo", true),
       execQuery.limit(200),
-      supabase.from("planos_preventivos").select("*").eq("empresa_id", empresa_id).eq("ativo", true),
-      supabase.from("lubrificacao").select("*").eq("empresa_id", empresa_id).eq("ativo", true),
-      supabase.from("fmea").select("*").eq("empresa_id", empresa_id).limit(50),
+      supabaseAdmin.from("planos_preventivos").select("*").eq("empresa_id", empresaId).eq("ativo", true),
+      supabaseAdmin.from("lubrificacao").select("*").eq("empresa_id", empresaId).eq("ativo", true),
+      supabaseAdmin.from("fmea").select("*").eq("empresa_id", empresaId).limit(50),
     ]);
 
     const os = osRes.data || [];
@@ -184,6 +247,10 @@ Faça a análise completa conforme instruído.`;
     });
 
     if (!response.ok) {
+      await logSystem("ERROR", "IA_ANALISE_GATEWAY_ERROR", "Falha no gateway de IA.", {
+        status: response.status,
+        modo,
+      });
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },

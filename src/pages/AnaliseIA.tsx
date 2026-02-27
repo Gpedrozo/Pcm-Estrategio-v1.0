@@ -120,7 +120,7 @@ export default function AnaliseIA() {
     setIsLoading(true);
     setAnalise('');
 
-    const body: any = { empresa_id: empresa.id, modo: modoAnalise };
+    const body: any = { modo: modoAnalise };
     if (modoAnalise === 'equipamento') body.tag = tagSelecionada;
     if (modoAnalise === 'periodo') {
       body.data_inicio = dataInicio!.toISOString();
@@ -128,13 +128,18 @@ export default function AnaliseIA() {
     }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Sessão inválida. Faça login novamente.');
+      }
+
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analise-ia`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify(body),
         }
