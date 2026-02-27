@@ -9,6 +9,10 @@
 */
 
 @layer base {
+  html {
+    font-size: 90%;
+  }
+
   :root {
     --background: 210 20% 96%;
     --foreground: 215 25% 15%;
