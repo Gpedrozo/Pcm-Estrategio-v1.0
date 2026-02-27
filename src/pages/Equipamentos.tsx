@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,13 +10,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, Plus, Search, Settings2, AlertTriangle, CheckCircle2, Activity, Eye, Pencil, GitBranch, BookOpen, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Search, Settings2, AlertTriangle, CheckCircle2, Activity, Eye, Pencil, GitBranch, BookOpen, Trash2, Download, Upload } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 import VisualizarAtivoDialog from '@/modules/equipamentos/VisualizarAtivoDialog';
 import EditarDadosAtivoDialog from '@/modules/equipamentos/EditarDadosAtivoDialog';
 import EditarArvoreAtivoDialog from '@/modules/equipamentos/EditarArvoreAtivoDialog';
 import ManuaisAtivoDialog from '@/modules/equipamentos/ManuaisAtivoDialog';
+import { generateEquipmentTreeTemplate, parseEquipmentTreeFile } from '@/lib/equipamentosImport';
 
 type Criticidade = Database['public']['Enums']['criticidade_abc'];
 type NivelRisco = Database['public']['Enums']['nivel_risco'];
@@ -70,8 +71,10 @@ export default function Equipamentos() {
   const [form, setForm] = useState(FORM_INITIAL);
   const [osCount, setOsCount] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pageSize = 20;
 
   useEffect(() => {
@@ -179,6 +182,218 @@ export default function Equipamentos() {
     load();
   };
 
+  const handleBulkImport = async (file: File) => {
+    setImporting(true);
+
+    try {
+      const { equipamentos, componentes, errors } = await parseEquipmentTreeFile(file);
+
+      if (equipamentos.length === 0) {
+        toast({
+          title: 'Nenhum equipamento válido na planilha',
+          description: errors.length ? errors.slice(0, 3).map((item) => `${item.sheet} L${item.row}: ${item.reason}`).join(' | ') : 'Verifique o modelo da planilha.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const importTags = equipamentos.map((item) => item.tag);
+
+      let existingEquipQuery = supabase
+        .from('equipamentos')
+        .select('id, tag')
+        .in('tag', importTags);
+
+      if (empresaId) {
+        existingEquipQuery = existingEquipQuery.eq('empresa_id', empresaId);
+      }
+
+      const { data: existingEquipData } = await existingEquipQuery;
+      const existingTagSet = new Set((existingEquipData || []).map((item) => item.tag));
+
+      const insertedTags: string[] = [];
+      const rejectedErrors = [...errors];
+
+      for (const equipamento of equipamentos) {
+        if (existingTagSet.has(equipamento.tag)) {
+          rejectedErrors.push({ sheet: 'Equipamentos', row: 0, reason: `TAG já existe no sistema: ${equipamento.tag}` });
+          continue;
+        }
+
+        const payload: EquipamentoInsert = {
+          tag: equipamento.tag,
+          nome: equipamento.nome,
+          localizacao: equipamento.localizacao,
+          fabricante: equipamento.fabricante,
+          modelo: equipamento.modelo,
+          numero_serie: equipamento.numero_serie,
+          data_instalacao: equipamento.data_instalacao,
+          criticidade: equipamento.criticidade,
+          nivel_risco: equipamento.nivel_risco,
+        };
+
+        const { error } = await insertWithEmpresa('equipamentos', payload as unknown as Record<string, unknown>);
+        if (error) {
+          rejectedErrors.push({ sheet: 'Equipamentos', row: 0, reason: `Falha ao inserir ${equipamento.tag}: ${error.message}` });
+          continue;
+        }
+
+        insertedTags.push(equipamento.tag);
+      }
+
+      const tagsToMap = Array.from(new Set([...insertedTags, ...componentes.map((item) => item.equipamento_tag)]));
+
+      let equipmentsMapQuery = supabase
+        .from('equipamentos')
+        .select('id, tag')
+        .in('tag', tagsToMap);
+
+      if (empresaId) {
+        equipmentsMapQuery = equipmentsMapQuery.eq('empresa_id', empresaId);
+      }
+
+      const { data: mappedEquipments } = await equipmentsMapQuery;
+      const equipamentoIdByTag = new Map((mappedEquipments || []).map((item) => [item.tag, item.id]));
+
+      const componentesValidos = componentes.filter((item) => {
+        if (equipamentoIdByTag.has(item.equipamento_tag)) {
+          return true;
+        }
+
+        rejectedErrors.push({
+          sheet: 'Componentes',
+          row: 0,
+          reason: `TAG do equipamento não encontrada para componente ${item.codigo}: ${item.equipamento_tag}`,
+        });
+        return false;
+      });
+
+      const equipamentosComComponentes = Array.from(new Set(componentesValidos.map((item) => equipamentoIdByTag.get(item.equipamento_tag) as string)));
+
+      let existingComponentQuery = supabase
+        .from('componentes_equipamento')
+        .select('id, equipamento_id, codigo')
+        .in('equipamento_id', equipamentosComComponentes);
+
+      if (empresaId) {
+        existingComponentQuery = existingComponentQuery.eq('empresa_id', empresaId);
+      }
+
+      const { data: existingComponents } = await existingComponentQuery;
+      const codigoToIdByEquip = new Map<string, Map<string, string>>();
+
+      for (const item of existingComponents || []) {
+        const key = item.equipamento_id;
+        if (!codigoToIdByEquip.has(key)) {
+          codigoToIdByEquip.set(key, new Map());
+        }
+        codigoToIdByEquip.get(key)?.set(item.codigo.toUpperCase(), item.id);
+      }
+
+      const pending = [...componentesValidos];
+      const unresolved: typeof componentesValidos = [];
+      let insertedComponents = 0;
+
+      while (pending.length > 0) {
+        let progressed = false;
+        unresolved.length = 0;
+
+        for (const componente of pending) {
+          const equipamentoId = equipamentoIdByTag.get(componente.equipamento_tag);
+          if (!equipamentoId) {
+            continue;
+          }
+
+          if (!codigoToIdByEquip.has(equipamentoId)) {
+            codigoToIdByEquip.set(equipamentoId, new Map());
+          }
+
+          const codigoMap = codigoToIdByEquip.get(equipamentoId)!;
+          const codigoUpper = componente.codigo.toUpperCase();
+
+          if (codigoMap.has(codigoUpper)) {
+            rejectedErrors.push({
+              sheet: 'Componentes',
+              row: 0,
+              reason: `Componente já existe para ${componente.equipamento_tag}: ${componente.codigo}`,
+            });
+            progressed = true;
+            continue;
+          }
+
+          const parentId = componente.parent_codigo ? codigoMap.get(componente.parent_codigo.toUpperCase()) : null;
+          if (componente.parent_codigo && !parentId) {
+            unresolved.push(componente);
+            continue;
+          }
+
+          const { data, error } = await supabase
+            .from('componentes_equipamento')
+            .insert({
+              equipamento_id: equipamentoId,
+              parent_id: parentId || null,
+              codigo: componente.codigo,
+              nome: componente.nome,
+              tipo: componente.tipo,
+              criticidade: componente.criticidade,
+              ordem: componente.ordem,
+              observacoes: componente.observacoes,
+              empresa_id: empresaId,
+            })
+            .select('id, codigo')
+            .single();
+
+          if (error) {
+            rejectedErrors.push({
+              sheet: 'Componentes',
+              row: 0,
+              reason: `Falha ao inserir componente ${componente.codigo}: ${error.message}`,
+            });
+            progressed = true;
+            continue;
+          }
+
+          codigoMap.set(String(data.codigo).toUpperCase(), data.id);
+          insertedComponents += 1;
+          progressed = true;
+        }
+
+        if (!progressed) {
+          for (const item of unresolved) {
+            rejectedErrors.push({
+              sheet: 'Componentes',
+              row: 0,
+              reason: `Parent não encontrado para ${item.codigo} (pai: ${item.parent_codigo || '-'})`,
+            });
+          }
+          break;
+        }
+
+        pending.length = 0;
+        pending.push(...unresolved);
+      }
+
+      toast({
+        title: 'Importação concluída',
+        description: `${insertedTags.length} equipamento(s) e ${insertedComponents} componente(s) importados. ${rejectedErrors.length} ocorrência(s) rejeitada(s).`,
+      });
+
+      if (rejectedErrors.length > 0) {
+        console.table(rejectedErrors);
+      }
+
+      await load();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao processar planilha.';
+      toast({ title: 'Erro na importação', description: message, variant: 'destructive' });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   const openVisualizar = (equip: Equipamento) => {
     setSelected(equip);
     setViewOpen(true);
@@ -236,21 +451,49 @@ export default function Equipamentos() {
           <h1 className="page-title">Gestão de Equipamentos</h1>
           <p className="page-subtitle">Cadastro completo de ativos industriais</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(v) => { setDialogOpen(v); if (!v) setForm(FORM_INITIAL); }}>
-          <DialogTrigger asChild>
-            <Button className="btn-industrial gap-2"><Plus className="h-4 w-4" />Novo Equipamento</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader><DialogTitle>Cadastrar Novo Equipamento</DialogTitle></DialogHeader>
-            <form onSubmit={handleSubmit}>
-              <FormFields form={form} setForm={setForm} />
-              <Button type="submit" className="btn-industrial w-full mt-6" disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Cadastrar Equipamento
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" className="gap-2" onClick={generateEquipmentTreeTemplate}>
+            <Download className="h-4 w-4" />Baixar Modelo
+          </Button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              handleBulkImport(file);
+            }}
+          />
+
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+          >
+            {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            Importar Planilha
+          </Button>
+
+          <Dialog open={dialogOpen} onOpenChange={(v) => { setDialogOpen(v); if (!v) setForm(FORM_INITIAL); }}>
+            <DialogTrigger asChild>
+              <Button className="btn-industrial gap-2"><Plus className="h-4 w-4" />Novo Equipamento</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader><DialogTitle>Cadastrar Novo Equipamento</DialogTitle></DialogHeader>
+              <form onSubmit={handleSubmit}>
+                <FormFields form={form} setForm={setForm} />
+                <Button type="submit" className="btn-industrial w-full mt-6" disabled={saving}>
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Cadastrar Equipamento
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
