@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { supabase } from '@/integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 
-type AppRole = 'ADMIN' | 'USUARIO' | 'SOLICITANTE' | 'MASTER_TI';
+type AppRole = 'ADMIN' | 'GESTOR' | 'USUARIO' | 'SOLICITANTE' | 'MASTER_TI';
 
 interface AuthUser {
   id: string;
@@ -49,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         tipo: (roleData?.role as AppRole) || 'USUARIO',
       };
     } catch (error) {
-      console.error('Error fetching user profile:', error);
       return { nome: 'Usuário', tipo: 'USUARIO' as const };
     }
   };
@@ -161,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   }, [user]);
 
-  const isAdmin = user?.tipo === 'ADMIN' || user?.tipo === 'MASTER_TI';
+  const isAdmin = user?.tipo === 'ADMIN' || user?.tipo === 'GESTOR' || user?.tipo === 'MASTER_TI';
   const isMasterTI = user?.tipo === 'MASTER_TI';
 
   return (

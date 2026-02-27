@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import type { Database } from '@/integrations/supabase/types';
+
+type PrioridadeOS = Database['public']['Enums']['prioridade_os'];
 
 interface Props {
   equipamento: {
@@ -29,7 +32,7 @@ export default function AbrirOrdemServico({ equipamento, componente, onSuccess }
   const { user } = useAuth();
   const { empresaId } = useEmpresaQuery();
   const [problema, setProblema] = useState('');
-  const [prioridade, setPrioridade] = useState('MEDIA');
+  const [prioridade, setPrioridade] = useState<PrioridadeOS>('MEDIA');
   const [fotosTexto, setFotosTexto] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -46,7 +49,7 @@ export default function AbrirOrdemServico({ equipamento, componente, onSuccess }
       const { error } = await supabase.from('ordens_servico').insert({
         empresa_id: empresaId,
         tipo: 'CORRETIVA',
-        prioridade: prioridade as any,
+        prioridade,
         tag: equipamento.tag,
         equipamento: equipamento.nome,
         componente: `${componente.codigo} - ${componente.nome}`,
@@ -66,8 +69,9 @@ export default function AbrirOrdemServico({ equipamento, componente, onSuccess }
       setPrioridade('MEDIA');
       setFotosTexto('');
       onSuccess?.();
-    } catch (error: any) {
-      toast({ title: 'Erro ao abrir O.S', description: error.message, variant: 'destructive' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro inesperado ao abrir O.S';
+      toast({ title: 'Erro ao abrir O.S', description: message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }

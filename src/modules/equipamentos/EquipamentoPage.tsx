@@ -7,22 +7,39 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader2, QrCode, Wrench } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import type { Database } from '@/integrations/supabase/types';
 import ArvoreEstrutural from './ArvoreEstrutural';
 import AbrirOrdemServico from './AbrirOrdemServico';
+
+type Equipamento = Database['public']['Tables']['equipamentos']['Row'];
+
+interface ComponenteSelecionado {
+  id: string;
+  codigo: string;
+  nome: string;
+  tipo: string;
+}
 
 export default function EquipamentoPage() {
   const { tag } = useParams();
   const { isAdmin } = useAuth();
   const { fromEmpresa } = useEmpresaQuery();
   const [loading, setLoading] = useState(true);
-  const [equipamento, setEquipamento] = useState<any | null>(null);
-  const [selectedComponente, setSelectedComponente] = useState<any | null>(null);
+  const [equipamento, setEquipamento] = useState<Equipamento | null>(null);
+  const [selectedComponente, setSelectedComponente] = useState<ComponenteSelecionado | null>(null);
   const [openOSDialog, setOpenOSDialog] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const { data } = await fromEmpresa('equipamentos').eq('tag', String(tag || '').toUpperCase()).maybeSingle();
+      const { data, error } = await fromEmpresa('equipamentos').eq('tag', String(tag || '').toUpperCase()).maybeSingle();
+      if (error) {
+        toast({ title: 'Falha ao carregar equipamento', description: error.message, variant: 'destructive' });
+        setEquipamento(null);
+        setLoading(false);
+        return;
+      }
       setEquipamento(data || null);
       setLoading(false);
     };

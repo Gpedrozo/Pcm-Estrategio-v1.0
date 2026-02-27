@@ -199,6 +199,11 @@ export default function Equipamentos() {
 
       const importTags = equipamentos.map((item) => item.tag);
 
+      if (importTags.length === 0) {
+        toast({ title: 'Nenhuma TAG válida para importar', variant: 'destructive' });
+        return;
+      }
+
       let existingEquipQuery = supabase
         .from('equipamentos')
         .select('id, tag')
@@ -243,6 +248,15 @@ export default function Equipamentos() {
 
       const tagsToMap = Array.from(new Set([...insertedTags, ...componentes.map((item) => item.equipamento_tag)]));
 
+      if (tagsToMap.length === 0) {
+        toast({
+          title: 'Importação concluída',
+          description: `${insertedTags.length} equipamento(s) importado(s). ${rejectedErrors.length} ocorrência(s) rejeitada(s).`,
+        });
+        await load();
+        return;
+      }
+
       let equipmentsMapQuery = supabase
         .from('equipamentos')
         .select('id, tag')
@@ -268,7 +282,16 @@ export default function Equipamentos() {
         return false;
       });
 
-      const equipamentosComComponentes = Array.from(new Set(componentesValidos.map((item) => equipamentoIdByTag.get(item.equipamento_tag) as string)));
+      const equipamentosComComponentes = Array.from(new Set(componentesValidos.map((item) => equipamentoIdByTag.get(item.equipamento_tag)).filter(Boolean) as string[]));
+
+      if (equipamentosComComponentes.length === 0) {
+        toast({
+          title: 'Importação concluída',
+          description: `${insertedTags.length} equipamento(s) importado(s). Nenhum componente válido para inserir. ${rejectedErrors.length} ocorrência(s) rejeitada(s).`,
+        });
+        await load();
+        return;
+      }
 
       let existingComponentQuery = supabase
         .from('componentes_equipamento')

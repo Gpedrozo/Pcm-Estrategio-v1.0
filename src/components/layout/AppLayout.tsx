@@ -19,6 +19,7 @@ export function AppLayout() {
   const routeModule = useMemo(() => getRouteModule(location.pathname), [location.pathname]);
   const allowedSolicitantePaths = useMemo(() => ['/dashboard', '/solicitacoes'], []);
   const blockedUsuarioPaths = useMemo(() => ['/os/nova'], []);
+  const blockedGestorPrefixes = useMemo(() => ['/admin', '/master-ti', '/system-health', '/usuarios'], []);
   const lastBlockedPathRef = useRef<string | null>(null);
   const allowed = useMemo(() => {
     if (!routeModule) return false;
@@ -72,6 +73,19 @@ export function AppLayout() {
       return;
     }
 
+    if (user?.tipo === 'GESTOR' && blockedGestorPrefixes.some((prefix) => location.pathname.startsWith(prefix))) {
+      if (lastBlockedPathRef.current !== location.pathname) {
+        lastBlockedPathRef.current = location.pathname;
+        toast({
+          title: 'Acesso restrito',
+          description: 'Perfil GESTOR não possui acesso a configurações críticas.',
+          variant: 'destructive',
+        });
+      }
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+
     if (!allowed) {
       if (location.pathname !== '/dashboard') {
         if (lastBlockedPathRef.current !== location.pathname) {
@@ -93,6 +107,7 @@ export function AppLayout() {
     user?.tipo,
     allowedSolicitantePaths,
     blockedUsuarioPaths,
+    blockedGestorPrefixes,
     isAuthenticated,
     isLoading,
     empresaLoading,
