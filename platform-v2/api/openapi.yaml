@@ -1,0 +1,36 @@
+openapi: 3.1.0
+info:
+  title: PCM Platform V2 API
+  version: 2.0.0
+  description: API oficial da plataforma global (v2)
+servers:
+  - url: https://{project}.supabase.co/functions/v1/platform-api/api/v1
+    variables:
+      project:
+        default: your-project
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiTokenAuth:
+      type: apiKey
+      in: header
+      name: x-api-token
+security:
+  - bearerAuth: []
+  - apiTokenAuth: []
+paths:
+  /equipamentos:
+    get: { summary: Lista equipamentos }
+  /ordens-servico:
+    get: { summary: Lista ordens de serviço }
+  /execucoes:
+    get: { summary: Lista execuções }
+  /indicadores:
+    get: { summary: Retorna indicadores }
+  /usuarios:
+    get: { summary: Lista usuários }
+  /empresas:
+    get: { summary: Retorna empresa autenticada }

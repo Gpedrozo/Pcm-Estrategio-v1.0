@@ -75,37 +75,67 @@ const App = () => (
             <Route path="/acessar-sistema" element={<Navigate to={PLATFORM_ROUTES.portalAcesso} replace />} />
             <Route path="/start" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/app" element={<Navigate to="/dashboard" replace />} />
 
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/app/dashboard" element={<Navigate to="/dashboard" replace />} />
               <Route path="/solicitacoes" element={<Solicitacoes />} />
+              <Route path="/app/solicitacoes" element={<Navigate to="/solicitacoes" replace />} />
               <Route path="/os/nova" element={<NovaOS />} />
+              <Route path="/app/os/nova" element={<Navigate to="/os/nova" replace />} />
               <Route path="/os/fechar" element={<FecharOS />} />
+              <Route path="/app/os/fechar" element={<Navigate to="/os/fechar" replace />} />
               <Route path="/os/historico" element={<HistoricoOS />} />
+              <Route path="/app/os/historico" element={<Navigate to="/os/historico" replace />} />
               <Route path="/backlog" element={<Backlog />} />
+              <Route path="/app/backlog" element={<Navigate to="/backlog" replace />} />
               <Route path="/programacao" element={<Programacao />} />
+              <Route path="/app/programacao" element={<Navigate to="/programacao" replace />} />
               <Route path="/preventiva" element={<Preventiva />} />
+              <Route path="/app/preventiva" element={<Navigate to="/preventiva" replace />} />
               <Route path="/preditiva" element={<Preditiva />} />
+              <Route path="/app/preditiva" element={<Navigate to="/preditiva" replace />} />
               <Route path="/inspecoes" element={<Inspecoes />} />
+              <Route path="/app/inspecoes" element={<Navigate to="/inspecoes" replace />} />
               <Route path="/fmea" element={<FMEAPage />} />
+              <Route path="/app/fmea" element={<Navigate to="/fmea" replace />} />
               <Route path="/rca" element={<RCAPage />} />
+              <Route path="/app/rca" element={<Navigate to="/rca" replace />} />
               <Route path="/melhorias" element={<MelhoriasPage />} />
+              <Route path="/app/melhorias" element={<Navigate to="/melhorias" replace />} />
               <Route path="/hierarquia" element={<Hierarquia />} />
+              <Route path="/app/hierarquia" element={<Navigate to="/hierarquia" replace />} />
               <Route path="/equipamentos" element={<Equipamentos />} />
+              <Route path="/app/equipamentos" element={<Navigate to="/equipamentos" replace />} />
               <Route path="/equipamento/:tag" element={<EquipamentoPage />} />
+              <Route path="/app/equipamento/:tag" element={<Navigate to="/equipamentos" replace />} />
               <Route path="/mecanicos" element={<Mecanicos />} />
+              <Route path="/app/mecanicos" element={<Navigate to="/mecanicos" replace />} />
               <Route path="/materiais" element={<Materiais />} />
+              <Route path="/app/materiais" element={<Navigate to="/materiais" replace />} />
               <Route path="/fornecedores" element={<Fornecedores />} />
+              <Route path="/app/fornecedores" element={<Navigate to="/fornecedores" replace />} />
               <Route path="/contratos" element={<Contratos />} />
+              <Route path="/app/contratos" element={<Navigate to="/contratos" replace />} />
               <Route path="/documentos" element={<DocumentosTecnicos />} />
+              <Route path="/app/documentos" element={<Navigate to="/documentos" replace />} />
               <Route path="/lubrificacao" element={<Lubrificacao />} />
+              <Route path="/app/lubrificacao" element={<Navigate to="/lubrificacao" replace />} />
               <Route path="/custos" element={<Custos />} />
+              <Route path="/app/custos" element={<Navigate to="/custos" replace />} />
               <Route path="/relatorios" element={<Relatorios />} />
+              <Route path="/app/relatorios" element={<Navigate to="/relatorios" replace />} />
               <Route path="/ssma" element={<SSMAPage />} />
+              <Route path="/app/ssma" element={<Navigate to="/ssma" replace />} />
               <Route path="/usuarios" element={<Usuarios />} />
+              <Route path="/app/usuarios" element={<Navigate to="/usuarios" replace />} />
               <Route path="/auditoria" element={<Auditoria />} />
+              <Route path="/app/auditoria" element={<Navigate to="/auditoria" replace />} />
               <Route path="/analise-ia" element={<AnaliseIA />} />
+              <Route path="/app/analise-ia" element={<Navigate to="/analise-ia" replace />} />
               <Route path="/system-health" element={<SystemHealth />} />
+              <Route path="/app/system-health" element={<Navigate to="/system-health" replace />} />
               <Route path="/master-ti" element={<Navigate to={PLATFORM_ROUTES.adminGlobal} replace />} />
             </Route>
 

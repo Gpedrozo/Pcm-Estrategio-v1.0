@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | PCM Estratégico</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="login-wrap">
+      <form class="login-card" onsubmit="event.preventDefault(); window.location.href='/login';">
+        <h1>Acessar Plataforma</h1>
+        <label>Email<input type="email" required placeholder="voce@empresa.com" /></label>
+        <label>Senha<input type="password" required placeholder="********" /></label>
+        <button class="btn btn-primary" type="submit">Entrar</button>
+        <p class="small">Você será redirecionado ao ambiente autenticado.</p>
+      </form>
+    </main>
+  </body>
+</html>
