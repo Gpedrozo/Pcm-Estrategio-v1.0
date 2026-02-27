@@ -36,9 +36,10 @@ const TIPOS_ARQUIVO = [
 interface Props {
   equipamentoId: string;
   equipamentoTag: string;
+  readOnly?: boolean;
 }
 
-export default function ManuaisEquipamento({ equipamentoId, equipamentoTag }: Props) {
+export default function ManuaisEquipamento({ equipamentoId, equipamentoTag, readOnly = false }: Props) {
   const { empresaId } = useEmpresaQuery();
   const [arquivos, setArquivos] = useState<ArquivoEquipamento[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +66,7 @@ export default function ManuaisEquipamento({ equipamentoId, equipamentoTag }: Pr
   useEffect(() => { load(); }, [load]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (readOnly) return;
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -127,6 +129,7 @@ export default function ManuaisEquipamento({ equipamentoId, equipamentoTag }: Pr
   };
 
   const handleDelete = async (arquivo: ArquivoEquipamento) => {
+    if (readOnly) return;
     if (!confirm(`Remover "${arquivo.nome_original}"?`)) return;
 
     // Delete from storage
@@ -174,54 +177,55 @@ export default function ManuaisEquipamento({ equipamentoId, equipamentoTag }: Pr
 
   return (
     <div className="space-y-5">
-      {/* Upload area */}
-      <div className="border border-dashed rounded-lg p-4 space-y-3">
-        <p className="text-sm font-medium flex items-center gap-2">
-          <Upload className="h-4 w-4 text-primary" />
-          Enviar Arquivo
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Tipo do Documento</Label>
-            <Select value={tipoUpload} onValueChange={setTipoUpload}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {TIPOS_ARQUIVO.map(t => (
-                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {!readOnly && (
+        <div className="border border-dashed rounded-lg p-4 space-y-3">
+          <p className="text-sm font-medium flex items-center gap-2">
+            <Upload className="h-4 w-4 text-primary" />
+            Enviar Arquivo
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Tipo do Documento</Label>
+              <Select value={tipoUpload} onValueChange={setTipoUpload}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TIPOS_ARQUIVO.map(t => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Descrição (opcional)</Label>
+              <Input
+                value={descricao}
+                onChange={e => setDescricao(e.target.value)}
+                placeholder="Ex: Manual do fabricante v2.1"
+              />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Descrição (opcional)</Label>
-            <Input
-              value={descricao}
-              onChange={e => setDescricao(e.target.value)}
-              placeholder="Ex: Manual do fabricante v2.1"
+          <div className="flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.gif,.dwg,.dxf"
+              onChange={handleUpload}
+              className="hidden"
+              id="manual-upload"
             />
+            <Button
+              variant="outline"
+              className="gap-2"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {uploading ? 'Enviando...' : 'Selecionar Arquivo'}
+            </Button>
+            <span className="text-xs text-muted-foreground">PDF, DOC, XLS, JPG, DWG — máx. 20MB</span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.gif,.dwg,.dxf"
-            onChange={handleUpload}
-            className="hidden"
-            id="manual-upload"
-          />
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {uploading ? 'Enviando...' : 'Selecionar Arquivo'}
-          </Button>
-          <span className="text-xs text-muted-foreground">PDF, DOC, XLS, JPG, DWG — máx. 20MB</span>
-        </div>
-      </div>
+      )}
 
       {/* File list */}
       {arquivos.length === 0 ? (
@@ -264,15 +268,17 @@ export default function ManuaisEquipamento({ equipamentoId, equipamentoTag }: Pr
                 >
                   <Download className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive"
-                  onClick={() => handleDelete(arq)}
-                  title="Remover"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {!readOnly && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive"
+                    onClick={() => handleDelete(arq)}
+                    title="Remover"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
           ))}

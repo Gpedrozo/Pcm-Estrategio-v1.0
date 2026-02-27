@@ -55,9 +55,10 @@ const FORM_INITIAL = {
 interface Props {
   equipamentoId: string;
   equipamentoTag: string;
+  readOnly?: boolean;
 }
 
-export default function ArvoreEstrutural({ equipamentoId, equipamentoTag }: Props) {
+export default function ArvoreEstrutural({ equipamentoId, equipamentoTag, readOnly = false }: Props) {
   const { empresaId } = useEmpresaQuery();
   const [nodes, setNodes] = useState<ComponenteNode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +105,7 @@ export default function ArvoreEstrutural({ equipamentoId, equipamentoTag }: Prop
   useEffect(() => { loadTree(); }, [loadTree]);
 
   const openAdd = (pId: string | null) => {
+    if (readOnly) return;
     setParentId(pId);
     setEditNode(null);
     // Suggest tipo based on depth
@@ -113,6 +115,7 @@ export default function ArvoreEstrutural({ equipamentoId, equipamentoTag }: Prop
   };
 
   const openEdit = (node: ComponenteNode) => {
+    if (readOnly) return;
     setEditNode(node);
     setParentId(node.parent_id);
     setForm({
@@ -175,6 +178,7 @@ export default function ArvoreEstrutural({ equipamentoId, equipamentoTag }: Prop
   };
 
   const handleDelete = async (node: ComponenteNode) => {
+    if (readOnly) return;
     if (!confirm(`Remover "${node.nome}" e todos os sub-itens?`)) return;
     const { error } = await supabase
       .from('componentes_equipamento')
@@ -211,10 +215,12 @@ export default function ArvoreEstrutural({ equipamentoId, equipamentoTag }: Prop
             {countTotal(nodes)} componente(s) cadastrado(s)
           </p>
         </div>
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => openAdd(null)}>
-          <Plus className="h-3.5 w-3.5" />
-          Adicionar Sistema
-        </Button>
+        {!readOnly && (
+          <Button size="sm" variant="outline" className="gap-1.5" onClick={() => openAdd(null)}>
+            <Plus className="h-3.5 w-3.5" />
+            Adicionar Sistema
+          </Button>
+        )}
       </div>
 
       {/* Tree */}
@@ -222,11 +228,13 @@ export default function ArvoreEstrutural({ equipamentoId, equipamentoTag }: Prop
         <div className="border border-dashed rounded-lg p-8 text-center text-muted-foreground">
           <Box className="h-10 w-10 mx-auto mb-3 opacity-40" />
           <p className="text-sm font-medium">Nenhum componente cadastrado</p>
-          <p className="text-xs mt-1">Adicione sistemas, subsistemas e componentes para construir a árvore estrutural.</p>
-          <Button size="sm" variant="outline" className="mt-4 gap-1.5" onClick={() => openAdd(null)}>
-            <Plus className="h-3.5 w-3.5" />
-            Adicionar Primeiro Sistema
-          </Button>
+          <p className="text-xs mt-1">{readOnly ? 'Não há estrutura cadastrada para visualização.' : 'Adicione sistemas, subsistemas e componentes para construir a árvore estrutural.'}</p>
+          {!readOnly && (
+            <Button size="sm" variant="outline" className="mt-4 gap-1.5" onClick={() => openAdd(null)}>
+              <Plus className="h-3.5 w-3.5" />
+              Adicionar Primeiro Sistema
+            </Button>
+          )}
         </div>
       ) : (
         <div className="border rounded-lg p-3 space-y-0.5 bg-muted/20">
@@ -244,77 +252,80 @@ export default function ArvoreEstrutural({ equipamentoId, equipamentoTag }: Prop
               onAdd={openAdd}
               onEdit={openEdit}
               onDelete={handleDelete}
+              readOnly={readOnly}
             />
           ))}
         </div>
       )}
 
       {/* Add/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={v => { setDialogOpen(v); if (!v) setEditNode(null); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editNode ? 'Editar Componente' : 'Novo Componente'}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+      {!readOnly && (
+        <Dialog open={dialogOpen} onOpenChange={v => { setDialogOpen(v); if (!v) setEditNode(null); }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{editNode ? 'Editar Componente' : 'Novo Componente'}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Código *</Label>
+                  <Input
+                    value={form.codigo}
+                    onChange={e => setForm(p => ({ ...p, codigo: e.target.value.toUpperCase() }))}
+                    required
+                    placeholder="Ex: SIS-COMP-01"
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Tipo *</Label>
+                  <Select value={form.tipo} onValueChange={v => setForm(p => ({ ...p, tipo: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {TIPOS.map(t => (
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Código *</Label>
+                <Label className="text-xs">Nome *</Label>
                 <Input
-                  value={form.codigo}
-                  onChange={e => setForm(p => ({ ...p, codigo: e.target.value.toUpperCase() }))}
+                  value={form.nome}
+                  onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
                   required
-                  placeholder="Ex: SIS-COMP-01"
-                  className="font-mono text-sm"
+                  placeholder="Ex: Sistema de Compressão"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Tipo *</Label>
-                <Select value={form.tipo} onValueChange={v => setForm(p => ({ ...p, tipo: v }))}>
+                <Label className="text-xs">Criticidade</Label>
+                <Select value={form.criticidade} onValueChange={v => setForm(p => ({ ...p, criticidade: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {TIPOS.map(t => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    {CRITICIDADES.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Nome *</Label>
-              <Input
-                value={form.nome}
-                onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
-                required
-                placeholder="Ex: Sistema de Compressão"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Criticidade</Label>
-              <Select value={form.criticidade} onValueChange={v => setForm(p => ({ ...p, criticidade: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CRITICIDADES.map(c => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Observações</Label>
-              <Textarea
-                value={form.observacoes}
-                onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))}
-                placeholder="Observações técnicas..."
-                rows={2}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              {editNode ? 'Salvar Alterações' : 'Adicionar'}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Observações</Label>
+                <Textarea
+                  value={form.observacoes}
+                  onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))}
+                  placeholder="Observações técnicas..."
+                  rows={2}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={saving}>
+                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                {editNode ? 'Salvar Alterações' : 'Adicionar'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -325,12 +336,14 @@ function TreeNode({
   onAdd,
   onEdit,
   onDelete,
+  readOnly,
 }: {
   node: ComponenteNode;
   depth: number;
   onAdd: (parentId: string | null) => void;
   onEdit: (node: ComponenteNode) => void;
   onDelete: (node: ComponenteNode) => void;
+  readOnly: boolean;
 }) {
   const [open, setOpen] = useState(depth <= 2);
   const hasChildren = node.children.length > 0;
@@ -368,17 +381,19 @@ function TreeNode({
           )}
 
           {/* Actions */}
-          <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onAdd(node.id)} title="Adicionar sub-item">
-              <Plus className="h-3 w-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(node)} title="Editar">
-              <Pencil className="h-3 w-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => onDelete(node)} title="Remover">
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
+          {!readOnly && (
+            <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onAdd(node.id)} title="Adicionar sub-item">
+                <Plus className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onEdit(node)} title="Editar">
+                <Pencil className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => onDelete(node)} title="Remover">
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
         </div>
 
         {hasChildren && (
@@ -391,6 +406,7 @@ function TreeNode({
                 onAdd={onAdd}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                readOnly={readOnly}
               />
             ))}
           </CollapsibleContent>
