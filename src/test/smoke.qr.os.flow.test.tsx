@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import GerarQRCode from '@/modules/equipamentos/GerarQRCode';
 import ImprimirEtiqueta from '@/modules/equipamentos/ImprimirEtiqueta';
 import AbrirOrdemServico from '@/modules/equipamentos/AbrirOrdemServico';
+import VisualizarAtivoDialog from '@/modules/equipamentos/VisualizarAtivoDialog';
 
 const mockFrom = vi.fn();
 const mockInsert = vi.fn();
@@ -138,6 +139,32 @@ describe('Smoke QR + Árvore + O.S', () => {
     expect(screen.getByText('10 cm x 10 cm')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('combobox'));
     expect(screen.getByText('5 cm x 5 cm')).toBeInTheDocument();
+  });
+
+  it('deve renderizar a aba QR no visualizar ativo com geração e impressão', async () => {
+    render(
+      <VisualizarAtivoDialog
+        open
+        onOpenChange={() => undefined}
+        equipamento={{
+          id: 'eq-1',
+          tag: 'EQ-001',
+          nome: 'Bomba Principal',
+          localizacao: 'Utilidades/Sala 1',
+          fabricante: 'KSB',
+          modelo: 'X1',
+          numero_serie: null,
+          created_at: new Date().toISOString(),
+          ativo: true,
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'QR Code' }));
+
+    expect(await screen.findByDisplayValue(/\/equipamento\/EQ-001$/i)).toBeInTheDocument();
+    expect(screen.getByText('Imprimir Etiqueta')).toBeInTheDocument();
+    expect(screen.getByText('10 cm x 10 cm')).toBeInTheDocument();
   });
 
   it('deve carregar rota /equipamento/{TAG} com dados corretos', async () => {
