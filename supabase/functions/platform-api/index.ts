@@ -8,8 +8,35 @@ const corsHeaders = {
 
 type TenantContext = {
   empresaId: string;
-  userId: string;
+  userId: string | null;
   userName: string;
+  authMode: "jwt" | "api_token";
+  tokenId?: string;
+};
+
+async function sha256Hex(input: string) {
+  const data = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function normalizeRoute(path: string) {
+  const clean = path.replace(/^functions\/v1\/platform-api\/?/, "");
+  return clean.replace(/^api\/v1\/?/, "").replace(/\/+$/, "");
+}
+
+function getRequiredScope(route: string, method: string) {
+  const key = `${method.toUpperCase()} ${route}`;
+  const matrix: Record<string, string> = {
+    "GET openapi": "read:openapi",
+    "GET equipamentos": "read:equipamentos",
+    "GET ordens-servico": "read:ordens-servico",
+    "GET execucoes": "read:execucoes",
+    "GET indicadores": "read:indicadores",
+    "GET usuarios": "read:usuarios",
+    "GET empresas": "read:empresas",
+  };
+  return matrix[key] || null;
 };
 
 function json(body: unknown, status = 200) {
@@ -27,47 +54,83 @@ serve(async (req) => {
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
   const path = new URL(req.url).pathname.replace(/^\/+/, "");
-  const route = path.replace(/^functions\/v1\/platform-api\/?/, "");
+  const route = normalizeRoute(path);
+  const requiredScope = getRequiredScope(route, req.method);
   const authHeader = req.headers.get("Authorization") || "";
-
-  if (!authHeader.startsWith("Bearer ")) {
-    return json({ error: "Token JWT ausente." }, 401);
-  }
+  const apiToken = req.headers.get("x-api-token")?.trim() || "";
 
   const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
   });
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  const { data: userRes, error: authError } = await supabaseAuth.auth.getUser();
-  if (authError || !userRes.user) {
-    return json({ error: "Usuário não autenticado." }, 401);
+  let tenant: TenantContext | null = null;
+
+  if (apiToken) {
+    const tokenHash = await sha256Hex(apiToken);
+    const { data: tokenRow, error: tokenError } = await supabaseAdmin
+      .from("api_tokens")
+      .select("id, empresa_id, name, scopes, active, expires_at")
+      .eq("token_hash", tokenHash)
+      .eq("active", true)
+      .maybeSingle();
+
+    const expired = tokenRow?.expires_at ? new Date(tokenRow.expires_at).getTime() < Date.now() : false;
+    if (tokenError || !tokenRow || expired) {
+      return json({ error: "x-api-token inválido ou expirado." }, 401);
+    }
+
+    const scopes = Array.isArray(tokenRow.scopes) ? tokenRow.scopes : [];
+    if (requiredScope && !scopes.includes(requiredScope)) {
+      return json({ error: `Escopo insuficiente. Necessário: ${requiredScope}` }, 403);
+    }
+
+    tenant = {
+      empresaId: tokenRow.empresa_id,
+      userId: null,
+      userName: tokenRow.name || "Integration Token",
+      authMode: "api_token",
+      tokenId: tokenRow.id,
+    };
+  } else {
+    if (!authHeader.startsWith("Bearer ")) {
+      return json({ error: "Token JWT ausente." }, 401);
+    }
+
+    const { data: userRes, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !userRes.user) {
+      return json({ error: "Usuário não autenticado." }, 401);
+    }
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("empresa_id, nome")
+      .eq("id", userRes.user.id)
+      .maybeSingle();
+
+    if (!profile?.empresa_id) {
+      return json({ error: "Empresa do usuário não identificada." }, 403);
+    }
+
+    tenant = {
+      empresaId: profile.empresa_id,
+      userId: userRes.user.id,
+      userName: profile.nome || userRes.user.email || "Usuário",
+      authMode: "jwt",
+    };
   }
-
-  const { data: profile } = await supabaseAdmin
-    .from("profiles")
-    .select("empresa_id, nome")
-    .eq("id", userRes.user.id)
-    .maybeSingle();
-
-  if (!profile?.empresa_id) {
-    return json({ error: "Empresa do usuário não identificada." }, 403);
-  }
-
-  const tenant: TenantContext = {
-    empresaId: profile.empresa_id,
-    userId: userRes.user.id,
-    userName: profile.nome || userRes.user.email || "Usuário",
-  };
 
   const endpointKey = `/api/v1/${route || ""}`;
-  const { data: rlData, error: rlError } = await supabaseAdmin.rpc("check_rate_limit", {
-    p_endpoint: endpointKey,
-    p_max_requests: 300,
-    p_window_seconds: 60,
-  });
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - 60 * 1000).toISOString();
+  const { count: usageCount, error: usageError } = await supabaseAdmin
+    .from("api_usage_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("empresa_id", tenant.empresaId)
+    .eq("endpoint", endpointKey)
+    .gte("created_at", windowStart);
 
-  if (rlError || rlData !== true) {
+  if (usageError || (usageCount || 0) >= 300) {
     return json({ error: "Rate limit excedido." }, 429);
   }
 
@@ -79,14 +142,17 @@ serve(async (req) => {
       method: req.method,
       status_code: statusCode,
       response_time_ms: 0,
-      metadata: {},
+      metadata: {
+        auth_mode: tenant.authMode,
+        token_id: tenant.tokenId ?? null,
+      },
     });
   };
 
   try {
     if (route === "openapi" && req.method === "GET") {
       await logUsage(200);
-      return json({ ok: true, spec: "docs/openapi/platform-api.yaml" });
+      return json({ ok: true, spec: "docs/openapi-platform-api.yaml" });
     }
 
     if (route === "equipamentos" && req.method === "GET") {

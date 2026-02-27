@@ -14,6 +14,10 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    apiTokenAuth:
+      type: apiKey
+      in: header
+      name: x-api-token
   parameters:
     page:
       name: page
@@ -32,6 +36,7 @@ components:
         default: 20
 security:
   - bearerAuth: []
+  - apiTokenAuth: []
 paths:
   /equipamentos:
     get:

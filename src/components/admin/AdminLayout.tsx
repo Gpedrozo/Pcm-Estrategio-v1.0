@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, Building2, Users, CreditCard, FileText,
   Settings, LogOut, ChevronLeft, Crown, BarChart3, Shield, ShieldAlert,
-  Menu, X
+  Menu, KeyRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -18,6 +18,7 @@ const adminMenu = [
   { title: 'Métricas', url: '/admin/metricas', icon: BarChart3 },
   { title: 'Permissões', url: '/admin/permissoes', icon: Shield },
   { title: 'Logs Segurança', url: '/admin/security-logs', icon: ShieldAlert },
+  { title: 'API Tokens', url: '/admin/api-tokens', icon: KeyRound },
   { title: 'Configurações', url: '/admin/config', icon: Settings },
 ];
 

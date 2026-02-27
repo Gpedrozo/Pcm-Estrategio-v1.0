@@ -55,6 +55,7 @@ import AdminMetricas from "./pages/admin/AdminMetricas";
 import AdminPermissoes from "./pages/admin/AdminPermissoes";
 import AdminConfig from "./pages/admin/AdminConfig";
 import AdminSecurityLogs from "./pages/admin/AdminSecurityLogs";
+import AdminApiTokens from "./pages/admin/AdminApiTokens";
 
 const queryClient = new QueryClient();
 
@@ -117,6 +118,7 @@ const App = () => (
             <Route path="/gestao/permissoes" element={<Navigate to="/admin/permissoes" replace />} />
             <Route path="/gestao/security-logs" element={<Navigate to="/admin/security-logs" replace />} />
             <Route path="/gestao/config" element={<Navigate to="/admin/config" replace />} />
+            <Route path="/gestao/api-tokens" element={<Navigate to="/admin/api-tokens" replace />} />
 
             {/* Portal Admin — MASTER_TI only */}
             <Route element={<AdminLayout />}>
@@ -129,6 +131,7 @@ const App = () => (
               <Route path="/admin/permissoes" element={<AdminPermissoes />} />
               <Route path="/admin/security-logs" element={<AdminSecurityLogs />} />
               <Route path="/admin/config" element={<AdminConfig />} />
+              <Route path="/admin/api-tokens" element={<AdminApiTokens />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
