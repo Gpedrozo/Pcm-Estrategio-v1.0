@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
+import { useEmpresa } from '@/contexts/EmpresaContext';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { useEnterpriseServices } from '@/core/presentation/useEnterpriseServices';
+import { requireTenantContext } from '@/core/infrastructure/tenancy/tenantGuard';
 
 type PrioridadeOS = Database['public']['Enums']['prioridade_os'];
 
@@ -30,7 +31,8 @@ interface Props {
 
 export default function AbrirOrdemServico({ equipamento, componente, onSuccess }: Props) {
   const { user } = useAuth();
-  const { empresaId } = useEmpresaQuery();
+  const { empresa } = useEmpresa();
+  const { abrirOrdemServicoInteligenteUseCase } = useEnterpriseServices();
   const [problema, setProblema] = useState('');
   const [prioridade, setPrioridade] = useState<PrioridadeOS>('MEDIA');
   const [fotosTexto, setFotosTexto] = useState('');
@@ -41,29 +43,31 @@ export default function AbrirOrdemServico({ equipamento, componente, onSuccess }
     setSaving(true);
 
     try {
+      const tenant = requireTenantContext({
+        empresaId: empresa?.id || null,
+        userId: user?.id || null,
+        userName: user?.nome || null,
+      });
+
       const fotos = fotosTexto
         .split('\n')
         .map((item) => item.trim())
         .filter(Boolean);
 
-      const { error } = await supabase.from('ordens_servico').insert({
-        empresa_id: empresaId,
-        tipo: 'CORRETIVA',
-        prioridade,
-        tag: equipamento.tag,
-        equipamento: equipamento.nome,
-        componente: `${componente.codigo} - ${componente.nome}`,
-        local: equipamento.localizacao || null,
-        solicitante: user?.nome || 'Usuário',
-        problema,
-        usuario_abertura_id: user?.id,
-        usuario_abertura: user?.nome || 'Usuário',
-        data_solicitacao: new Date().toISOString(),
-        fotos,
-        status: 'ABERTA',
-      });
+      await abrirOrdemServicoInteligenteUseCase.execute(
+        {
+          tag: equipamento.tag,
+          equipamento: equipamento.nome,
+          componenteCodigo: componente.codigo,
+          componenteNome: componente.nome,
+          local: equipamento.localizacao || null,
+          prioridade,
+          problema,
+          fotos,
+        },
+        tenant,
+      );
 
-      if (error) throw error;
       toast({ title: 'O.S aberta com sucesso!' });
       setProblema('');
       setPrioridade('MEDIA');

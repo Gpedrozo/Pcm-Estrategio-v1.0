@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useEmpresaQuery } from '@/hooks/useEmpresaQuery';
+import { useEmpresa } from '@/contexts/EmpresaContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Loader2, QrCode, Wrench } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { useEnterpriseServices } from '@/core/presentation/useEnterpriseServices';
+import { requireTenantContext } from '@/core/infrastructure/tenancy/tenantGuard';
 import ArvoreEstrutural from './ArvoreEstrutural';
 import AbrirOrdemServico from './AbrirOrdemServico';
 
@@ -23,8 +25,9 @@ interface ComponenteSelecionado {
 
 export default function EquipamentoPage() {
   const { tag } = useParams();
-  const { isAdmin } = useAuth();
-  const { fromEmpresa } = useEmpresaQuery();
+  const { isAdmin, user } = useAuth();
+  const { empresa } = useEmpresa();
+  const { getEquipamentoByTagUseCase } = useEnterpriseServices();
   const [loading, setLoading] = useState(true);
   const [equipamento, setEquipamento] = useState<Equipamento | null>(null);
   const [selectedComponente, setSelectedComponente] = useState<ComponenteSelecionado | null>(null);
@@ -33,18 +36,25 @@ export default function EquipamentoPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const { data, error } = await fromEmpresa('equipamentos').eq('tag', String(tag || '').toUpperCase()).maybeSingle();
-      if (error) {
-        toast({ title: 'Falha ao carregar equipamento', description: error.message, variant: 'destructive' });
+      try {
+        const tenant = requireTenantContext({
+          empresaId: empresa?.id || null,
+          userId: user?.id || null,
+          userName: user?.nome || null,
+        });
+
+        const data = await getEquipamentoByTagUseCase.execute(String(tag || ''), tenant);
+        setEquipamento(data || null);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Falha ao carregar equipamento';
+        toast({ title: 'Falha ao carregar equipamento', description: message, variant: 'destructive' });
         setEquipamento(null);
+      } finally {
         setLoading(false);
-        return;
       }
-      setEquipamento(data || null);
-      setLoading(false);
     };
     load();
-  }, [fromEmpresa, tag]);
+  }, [empresa?.id, getEquipamentoByTagUseCase, tag, user?.id, user?.nome]);
 
   if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!equipamento) return <Card className="card-industrial"><CardContent className="p-8 text-center text-muted-foreground">Equipamento não encontrado para TAG: <strong>{String(tag || '').toUpperCase()}</strong></CardContent></Card>;

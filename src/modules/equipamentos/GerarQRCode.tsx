@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Copy, ExternalLink } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useEnterpriseServices } from '@/core/presentation/useEnterpriseServices';
 
 interface Props {
   tag: string;
@@ -10,8 +11,8 @@ interface Props {
 }
 
 export default function GerarQRCode({ tag, nome }: Props) {
-  const qrPath = `/equipamento/${encodeURIComponent(tag)}`;
-  const fullUrl = `${window.location.origin}${qrPath}`;
+  const { gerarQrUrlEquipamentoUseCase } = useEnterpriseServices();
+  const fullUrl = gerarQrUrlEquipamentoUseCase.execute(tag, window.location.origin);
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(fullUrl)}`;
 
   const copyLink = async () => {
