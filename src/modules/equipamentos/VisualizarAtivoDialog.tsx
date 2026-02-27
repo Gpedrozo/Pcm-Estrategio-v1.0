@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import ArvoreEstrutural from '@/components/equipamentos/ArvoreEstrutural';
 import ManuaisEquipamento from '@/components/equipamentos/ManuaisEquipamento';
+import GerarQRCode from '@/modules/equipamentos/GerarQRCode';
+import ImprimirEtiqueta from '@/modules/equipamentos/ImprimirEtiqueta';
 
 interface Equipamento {
   id: string;
@@ -52,8 +54,9 @@ export default function VisualizarAtivoDialog({ open, onOpenChange, equipamento 
         </DialogHeader>
 
         <Tabs defaultValue="dados" className="mt-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dados">Informações</TabsTrigger>
+            <TabsTrigger value="qr">QR Code</TabsTrigger>
             <TabsTrigger value="estrutura">Estrutura</TabsTrigger>
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
           </TabsList>
@@ -70,6 +73,12 @@ export default function VisualizarAtivoDialog({ open, onOpenChange, equipamento 
               <InfoField label="Data de Cadastro" value={new Date(equipamento.created_at).toLocaleDateString('pt-BR')} />
               <InfoField label="Status" value={equipamento.ativo ? 'Ativo' : 'Inativo'} />
             </div>
+          </TabsContent>
+
+          <TabsContent value="qr" className="mt-4 space-y-6">
+            <GerarQRCode tag={equipamento.tag} nome={equipamento.nome} />
+            <Separator />
+            <ImprimirEtiqueta tag={equipamento.tag} nome={equipamento.nome} />
           </TabsContent>
 
           <TabsContent value="estrutura" className="mt-4">
