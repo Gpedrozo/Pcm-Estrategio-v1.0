@@ -84,18 +84,51 @@ serve(async (req) => {
 
     const empresaId = profile.empresa_id;
 
-    const { modo = "top-problemas", tag, data_inicio, data_fim } = await req.json();
+    const endpointKey = "/functions/v1/analise-ia";
+    const { data: allowedByRateLimit, error: rateLimitError } = await supabaseAdmin.rpc("check_rate_limit", {
+      p_endpoint: endpointKey,
+      p_max_requests: 60,
+      p_window_seconds: 60,
+    });
+
+    if (rateLimitError || allowedByRateLimit !== true) {
+      await logSystem("WARN", "IA_ANALISE_RATE_LIMIT", "Rate limit da análise IA excedido.", {
+        endpoint: endpointKey,
+        user_id: user.id,
+      });
+      return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const logApiUsage = async (statusCode: number, responseTimeMs = 0) => {
+      await supabaseAdmin.from("api_usage_logs").insert({
+        empresa_id: empresaId,
+        user_id: user.id,
+        endpoint: endpointKey,
+        method: req.method,
+        status_code: statusCode,
+        response_time_ms: responseTimeMs,
+        metadata: { source: "analise-ia" },
+      });
+    };
+
+    const requestStart = Date.now();
+    const requestBody = await req.json().catch(() => ({}));
+    const { modo = "top-problemas", tag, data_inicio, data_fim } = requestBody;
+    const modoSeguro = ["top-problemas", "equipamento", "periodo"].includes(modo) ? modo : "top-problemas";
 
     // Build queries based on mode
     let osQuery = supabaseAdmin.from("ordens_servico").select("*").eq("empresa_id", empresaId).order("created_at", { ascending: false });
     let execQuery = supabaseAdmin.from("execucoes_os").select("*").eq("empresa_id", empresaId).order("created_at", { ascending: false });
 
-    if (modo === "equipamento" && tag) {
+    if (modoSeguro === "equipamento" && tag) {
       osQuery = osQuery.eq("tag", tag);
       // execucoes don't have tag, we'll filter after joining with OS
     }
 
-    if (modo === "periodo" && data_inicio && data_fim) {
+    if (modoSeguro === "periodo" && data_inicio && data_fim) {
       osQuery = osQuery.gte("data_solicitacao", data_inicio).lte("data_solicitacao", data_fim);
       execQuery = execQuery.gte("data_execucao", data_inicio.split("T")[0]).lte("data_execucao", data_fim.split("T")[0]);
     }
@@ -148,7 +181,7 @@ serve(async (req) => {
       .join("\n");
 
     // FMEA
-    const fmeaFiltered = modo === "equipamento" && tag
+    const fmeaFiltered = modoSeguro === "equipamento" && tag
       ? fmea.filter((f: any) => f.tag === tag)
       : fmea;
     const fmeaContext = fmeaFiltered
@@ -163,11 +196,11 @@ serve(async (req) => {
 
     // Build mode-specific prompt
     let modoInstrucao = "";
-    if (modo === "equipamento") {
+    if (modoSeguro === "equipamento") {
       const eq = equipamentos.find((e: any) => e.tag === tag);
       modoInstrucao = `FOCO DA ANÁLISE: Equipamento ${tag}${eq ? ` (${eq.nome}, Criticidade: ${eq.criticidade}, Risco: ${eq.nivel_risco}, Fabricante: ${eq.fabricante || "N/I"})` : ""}.
 Analise ESPECIFICAMENTE este equipamento: histórico de falhas, padrões de problemas, causas recorrentes, custos associados e previsões.`;
-    } else if (modo === "periodo") {
+    } else if (modoSeguro === "periodo") {
       modoInstrucao = `FOCO DA ANÁLISE: Período de ${data_inicio?.split("T")[0]} a ${data_fim?.split("T")[0]}.
 Analise o que aconteceu NESTE PERÍODO: tendências, picos de falhas, comparações, causas predominantes.`;
     } else {
@@ -249,8 +282,9 @@ Faça a análise completa conforme instruído.`;
     if (!response.ok) {
       await logSystem("ERROR", "IA_ANALISE_GATEWAY_ERROR", "Falha no gateway de IA.", {
         status: response.status,
-        modo,
+        modo: modoSeguro,
       });
+      await logApiUsage(response.status, Date.now() - requestStart);
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -267,6 +301,8 @@ Faça a análise completa conforme instruído.`;
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    await logApiUsage(200, Date.now() - requestStart);
 
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },

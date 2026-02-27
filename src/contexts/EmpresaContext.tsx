@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { normalizeModuleList, normalizeModuleName } from '@/constants/modules';
+import { activateEmpresaPlugins } from '@/plugins/runtime';
 
 interface Empresa {
   id: string;
@@ -95,6 +96,13 @@ export function EmpresaProvider({ children }: { children: React.ReactNode }) {
 
         if (empresaData) {
           setEmpresa(empresaData as Empresa);
+
+          await activateEmpresaPlugins({
+            empresaId: empresaData.id,
+            userId: user.id,
+            locale: 'pt-BR',
+            timezone: 'America/Sao_Paulo',
+          });
         }
 
         // Load assinatura with plano info

@@ -1,0 +1,77 @@
+openapi: 3.1.0
+info:
+  title: PCM Platform API
+  version: 1.0.0
+  description: API pública oficial da plataforma SaaS multi-tenant.
+servers:
+  - url: https://{project}.supabase.co/functions/v1/platform-api/api/v1
+    variables:
+      project:
+        default: your-project
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+security:
+  - bearerAuth: []
+paths:
+  /equipamentos:
+    get:
+      summary: Lista equipamentos da empresa autenticada
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+  /ordens-servico:
+    get:
+      summary: Lista ordens de serviço da empresa autenticada
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: OK
+  /execucoes:
+    get:
+      summary: Lista execuções de O.S
+      responses:
+        '200':
+          description: OK
+  /indicadores:
+    get:
+      summary: Retorna indicadores agregados
+      responses:
+        '200':
+          description: OK
+  /usuarios:
+    get:
+      summary: Lista usuários da empresa autenticada
+      responses:
+        '200':
+          description: OK
+  /empresas:
+    get:
+      summary: Retorna metadados da empresa autenticada
+      responses:
+        '200':
+          description: OK
