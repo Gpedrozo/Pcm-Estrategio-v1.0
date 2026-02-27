@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Search, Settings2, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Loader2, Plus, Search, Settings2, AlertTriangle, CheckCircle2, Activity, Eye, Pencil, GitBranch, BookOpen, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 import VisualizarAtivoDialog from '@/modules/equipamentos/VisualizarAtivoDialog';
@@ -291,12 +292,76 @@ export default function Equipamentos() {
                     <td>{osCount[e.tag] ? <Badge variant="outline" className="font-mono">{osCount[e.tag]}</Badge> : <span className="text-muted-foreground">0</span>}</td>
                     <td><Badge variant={e.ativo ? 'default' : 'secondary'}>{e.ativo ? 'Ativo' : 'Inativo'}</Badge></td>
                     <td className="text-right" onClick={(ev) => ev.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1 flex-wrap">
-                        <Button variant="outline" size="sm" onClick={() => openVisualizar(e)}>Visualizar</Button>
-                        <Button variant="outline" size="sm" onClick={() => openEditarDados(e)}>Editar Dados</Button>
-                        <Button variant="outline" size="sm" onClick={() => openEditarArvore(e)}>Editar Árvore</Button>
-                        <Button variant="outline" size="sm" onClick={() => openManuais(e)}>Manuais</Button>
-                        <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleDelete(e)}>Excluir</Button>
+                      <div className="actions-container justify-end">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="action-icon-btn text-primary"
+                              onClick={() => openVisualizar(e)}
+                            >
+                              <Eye className="h-5 w-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Visualizar ativo</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="action-icon-btn text-blue-600"
+                              onClick={() => openEditarDados(e)}
+                            >
+                              <Pencil className="h-5 w-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Editar dados do ativo</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="action-icon-btn text-violet-600"
+                              onClick={() => openEditarArvore(e)}
+                            >
+                              <GitBranch className="h-5 w-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Editar árvore do ativo</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="action-icon-btn text-emerald-600"
+                              onClick={() => openManuais(e)}
+                            >
+                              <BookOpen className="h-5 w-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Gerenciar manuais</TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="action-icon-btn text-destructive"
+                              onClick={() => handleDelete(e)}
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Excluir ativo</TooltipContent>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
