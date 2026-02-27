@@ -61,15 +61,6 @@ export type Database = {
           acao_corretiva?: string | null
           causa_raiz_identificada?: string | null
           created_at?: string
-                    data_fim: string | null
-                    data_inicio: string | null
-                    equipe: string | null
-                    fotos: Json | null
-                    observacoes: string | null
-                    tecnico_responsavel: string | null
-                    tempo_atendimento: number | null
-                    tempo_maquina_parada: number | null
-                    tempo_reparo: number | null
           data_falha?: string
           descricao_falha?: string
           empresa_id?: string | null
@@ -87,15 +78,6 @@ export type Database = {
           tag?: string
           updated_at?: string
         }
-                    data_fim?: string | null
-                    data_inicio?: string | null
-                    equipe?: string | null
-                    fotos?: Json | null
-                    observacoes?: string | null
-                    tecnico_responsavel?: string | null
-                    tempo_atendimento?: number | null
-                    tempo_maquina_parada?: number | null
-                    tempo_reparo?: number | null
         Relationships: [
           {
             foreignKeyName: "analise_causa_raiz_empresa_id_fkey"
@@ -113,15 +95,6 @@ export type Database = {
           empresa_id: string | null
           equipamento_id: string
           id: string
-                    data_fim?: string | null
-                    data_inicio?: string | null
-                    equipe?: string | null
-                    fotos?: Json | null
-                    observacoes?: string | null
-                    tecnico_responsavel?: string | null
-                    tempo_atendimento?: number | null
-                    tempo_maquina_parada?: number | null
-                    tempo_reparo?: number | null
           nome_arquivo: string
           nome_original: string
           storage_path: string

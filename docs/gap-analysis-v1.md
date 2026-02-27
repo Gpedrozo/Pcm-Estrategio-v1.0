@@ -14,7 +14,7 @@ Status geral: **parcialmente convergente**.
 ## Matriz de lacunas
 
 | Domínio | Referência | Atual v1.0 | Situação |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Master TI (abas avançadas especializadas) | Users/Permissions/Empresa/Logos/Database/Monitor/Settings/Audit/Security/Documents com componentes dedicados | Página única robusta com abas, porém sem todos os componentes avançados dedicados | Parcial |
 | Segurança observável | `security_logs`, `rate_limits`, visão de falhas/rate events | Existia placeholder no UI | **Fechado nesta etapa** |
 | Permissões granulares por usuário | `permissoes_granulares` e UI dedicada | Ajuste por plano/módulo existente; granular faltante | **Base de dados fechada nesta etapa** |
@@ -42,17 +42,20 @@ Status geral: **parcialmente convergente**.
 ## Backlog de implantação (próximas ondas)
 
 ### Onda 1 — Admin 10x (dados e governança)
+
 - CRUD visual completo para `permissoes_granulares` no admin global.
 - CRUD de `configuracoes_sistema` com categoria/tipo/escopo por empresa.
 - Painel de segurança com listagem paginada de `security_logs`.
 - Rotina agendada para `cleanup_rate_limits`.
 
 ### Onda 2 — Paridade funcional Master TI
+
 - Quebrar `MasterTI` em componentes dedicados (padrão da referência).
 - Reintroduzir "Documents" avançado com layouts e sequências (se aprovado no escopo).
 - Monitor de saúde com checagem de tempos por tabela/função.
 
 ### Onda 3 — Módulos operacionais avançados
+
 - Preventiva: estrutura + templates + execução detalhada.
 - SSMA: permissões de trabalho completas e estados de ciclo.
 - Relatórios e custos com filtros executivos unificados.
